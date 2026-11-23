@@ -6,9 +6,6 @@
 <meta name="description" content="给一个人过日子的小工具：生活账本、冰箱库存、一周三餐、日常待办、采购清单。">
 <meta name="theme-color" content="#FAFBF7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="生活管家">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -352,11 +349,13 @@ button.li:hover{background:var(--card2)}
 /* sheet */
 .sheet-wrap{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
 .sheet-bg{position:absolute;inset:0;background:var(--scrim)}
-.sheet{position:relative;background:var(--card);border-radius:22px;width:min(560px,100%);max-height:min(88vh,820px);overflow:auto;overscroll-behavior:contain;padding:20px;box-shadow:0 24px 60px -20px rgba(0,0,0,.45)}
-@media (max-width:640px){.sheet-wrap{align-items:flex-end;padding:0}.sheet{border-radius:22px 22px 0 0;width:100%;max-height:92vh;padding-top:14px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}.sheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}}
+.sheet{--sheet-pb:20px;position:relative;background:var(--card);border-radius:22px;width:min(560px,100%);max-height:min(88vh,820px);max-height:min(88dvh,820px);overflow:auto;overscroll-behavior:contain;padding:20px 20px var(--sheet-pb);box-shadow:0 24px 60px -20px rgba(0,0,0,.45)}
+@media (max-width:640px){.sheet-wrap{align-items:flex-end;padding:0}.sheet{--sheet-pb:calc(16px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0;width:100%;max-height:85vh;max-height:85dvh;padding-top:14px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}.sheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}}
 .sheet-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sheet-h h3{flex:1;margin:0;font-size:19px;font-weight:800;min-width:0}
 .sheet-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:4px}
+/* the save row stays pinned to the bottom of a long sheet */
+.sheet .sheet-actions{position:sticky;bottom:calc(-1 * var(--sheet-pb));z-index:2;background:var(--card);margin-bottom:calc(-1 * var(--sheet-pb));padding:12px 0 var(--sheet-pb);border-top:1px solid var(--line)}
 .sheet-actions .btn.primary{flex:1 1 160px}
 .bought-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
 .bd-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 40px;gap:8px;align-items:center}
@@ -399,6 +398,16 @@ label.btn{cursor:pointer}
 .quick-row{gap:8px}
 .quick-row>*{flex:1 1 0}
 @media (max-width:780px){.phone-only{display:flex}}
+.link-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:10px 0 0;color:var(--green);font-weight:700;font-size:13.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
+.link-btn svg.ic{width:16px;height:16px}
+.copy-row{display:flex;gap:8px;align-items:center;margin:6px 0 4px}
+.copy-row code{flex:1;min-width:0;overflow-wrap:anywhere;background:var(--card2);border:1px solid var(--line);padding:8px 10px;border-radius:10px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+.sh-h{margin:18px 0 8px;font-size:15px;font-weight:800}
+details.ocr{margin-top:12px;font-size:13px;color:var(--ink2)}
+details.ocr summary{cursor:pointer;font-weight:700}
+details.ocr pre{white-space:pre-wrap;font-size:12px;max-height:180px;overflow:auto;background:var(--card2);padding:8px 10px;border-radius:8px;margin:8px 0 0}
+.toast-btn{margin-left:10px;border:0;border-radius:8px;padding:5px 10px;background:var(--sun);color:var(--sun-on);font-weight:800;font-size:13px;cursor:pointer}
+.chip-row{display:flex;flex-wrap:wrap;gap:4px 14px}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
 .steps.help{margin:6px 0 0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:700;z-index:70;max-width:calc(100% - 32px);box-shadow:0 10px 30px -10px rgba(0,0,0,.5);text-align:center}
@@ -910,7 +919,7 @@ function renderHome(){
     (ms.left >= 0 ? '<div class="money">' + fmtC(ms.left, dc) + '</div><div class="small mute" style="margin-bottom:8px">这个月还能花</div>'
                   : '<div class="money bad">超支 ' + fmtC(-ms.left, dc) + '</div><div class="small mute" style="margin-bottom:8px">接下来的日子省着点</div>') +
     '<div class="bar' + (ms.left < 0 ? ' bad' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
-    '<div class="between small mute" style="margin-top:6px"><span>已支出 ' + fmtC(ms.out, dc) + '</span><span>总预算 ' + fmtC(ms.budget, dc) + '</span></div>' +
+    '<div class="between small mute" style="margin-top:6px"><span>已支出 ' + fmtC(ms.out, dc) + '</span><button class="rate-chip" style="margin:0" data-a="budget">总预算 ' + fmtC(ms.budget, dc) + ic('edit') + '</button></div>' +
     (ms.raw.out.KRW && ms.raw.out.CNY ? '<p class="hint" style="margin-top:6px">其中 ' + fmtC(ms.raw.out.KRW, 'KRW') + ' + ' + fmtC(ms.raw.out.CNY, 'CNY') + '，按 ' + rateText() + ' 折算</p>' : '') +
     '<div class="trio"><div><span>本月收入</span><b>' + fmtC(ms.income, dc) + '</b></div><div><span>储蓄目标</span><b>' + fmtC(ms.saveGoal, dc) + '</b></div><div><span>已存入 · 手动记录</span><b>' + fmtC(ms.saved, dc) + '</b></div></div>' +
     '<div class="actions">' + photoBtn('btn sm primary') + '<button class="btn sm soft" data-a="go" data-tab="ledger">' + ic('plus') + '记一笔</button></div></article>';
@@ -967,7 +976,7 @@ function renderLedger(){
   html += '<div class="tiles2"><div class="tile"><span>本月收入</span>' + (split ? splitHtml(ms.raw['in']) : '<b>' + fmtC(ms.income, dc) + '</b>') + '</div>' +
     '<div class="tile"><span>本月支出</span>' + (split ? splitHtml(ms.raw.out) : '<b>' + fmtC(ms.out, dc) + '</b>') + '</div></div>';
   html += '<div class="tile mint' + (ms.left < 0 ? ' bad' : '') + '"><span>' + (ms.left < 0 ? '已经超出预算' : '可支配预算余额') + (split && ms.mixed ? '（换算成' + CURS[dc].name + '）' : '') + '</span><b>' + fmtC(Math.abs(ms.left), dc) + '</b>' +
-    '<button class="rate-chip" data-a="rate">汇率 ' + rateText() + (S.settings.rateAt ? '' : ' · 默认值，点这里改') + ic('edit') + '</button></div>';
+    '<div class="chip-row"><button class="rate-chip" data-a="budget">改每月预算' + ic('edit') + '</button><button class="rate-chip" data-a="rate">汇率 ' + rateText() + (S.settings.rateAt ? '' : ' · 默认值，点这里改') + ic('edit') + '</button></div></div>';
   var cats = S.settings.cats.slice(), extra = Object.keys(ms.byCat).filter(function(n){ return !cats.some(function(c){ return c.n === n; }); });
   extra.forEach(function(n){ cats.push({n:n, b:0}); });
   html += '<article class="card"><header class="card-h"><h2>每一份预算，都有去处</h2><button class="btn sm" data-a="budget">调整预算</button></header><div class="cat-bars">' +
@@ -984,6 +993,7 @@ function renderLedger(){
   html += '<article class="card"><header class="card-h"><span class="bubble">' + ic('camera') + '</span><h2>拍一下，自动记账</h2></header>' +
     '<p class="lead">付款截图、超市小票、刷卡单都行，可以一次选好几张。认出来的金额、韩元还是人民币、类别，你核对一下再记。</p>' +
     photoBtn('btn primary wide big') +
+    '<button class="link-btn" data-a="shortcut">' + ic('spark') + '设置：敲两下手机背面，自动截图记账</button>' +
     '<form class="say" data-f="say" autocomplete="off"><label class="field" for="say-in">现金付的，或者懒得拍照？说一句就行</label>' +
     '<textarea id="say-in" name="say" rows="2" placeholder="现金 1.2万韩元 买菜&#10;地铁 1400；淘宝 58元 衣架"></textarea>' +
     '<button class="btn soft" type="submit">' + ic('spark') + '识别这句话</button></form></article>';
@@ -1206,13 +1216,29 @@ function sheetBudget(){
   var rows = S.settings.cats.map(function(c){ return budgetRow(c.n, c.b); }).join('');
   openSheet(sheetHead('调整每月预算') + '<form class="form" data-f="budget" data-cur="' + bc + '" autocomplete="off"><p class="lead" style="margin:0">每一类每个月打算花多少。改名不会影响已经记过的账。</p>' +
     '<div class="field"><span>预算用哪种钱</span><div class="seg cur2" style="max-width:280px">' + ['KRW','CNY'].map(function(c){ return '<label><input type="radio" name="bcur" value="' + c + '"' + (bc === c ? ' checked' : '') + '>' + CURS[c].sym + ' ' + CURS[c].name + '</label>'; }).join('') + '</div><span class="hint">切换时，下面的数字会按 ' + rateText() + ' 换算过去。</span></div>' +
+    '<label class="field">每月总预算<input type="text" inputmode="decimal" id="bd-total" value="' + S.settings.cats.reduce(function(a,c){ return a + c.b; }, 0) + '"><span class="hint">改总数会按比例分到下面各类，也可以单独改某一类。每个月都用这套预算。</span></label>' +
     '<div id="bd-rows" style="display:grid;gap:8px">' + rows + '</div><div><button type="button" class="btn sm" data-a="bd-add">' + ic('plus') + '加一类</button></div>' +
     '<label class="field">每月储蓄目标<input type="number" name="saveGoal" min="0" step="any" inputmode="decimal" value="' + S.settings.saveGoal + '"></label>' +
     '<p class="hint" id="bd-sum"></p><div class="sheet-actions"><button class="btn primary" type="submit">保存</button></div></form>');
   budgetSum();
 }
 function budgetRow(n, b){ return '<div class="bd-row"><input type="text" name="cn" value="' + esc(n) + '" placeholder="类别" aria-label="类别名" required><input type="number" name="cb" value="' + b + '" min="0" step="any" inputmode="decimal" aria-label="每月预算"><button type="button" class="icon-btn" data-a="bd-del" aria-label="删掉这一类">' + ic('trash') + '</button></div>'; }
-function budgetSum(){ var el = $('#bd-sum'); if (!el) return; var f = el.closest('form'), s = $$('#bd-rows input[name=cb]').reduce(function(a,i){ return a + num(i.value); }, 0); el.textContent = '每月总预算 ' + fmtC(s, f ? f.dataset.cur : S.settings.budgetCur) + '。'; }
+function budgetSum(){
+  var el = $('#bd-sum'); if (!el) return;
+  var f = el.closest('form'), s = $$('#bd-rows input[name=cb]').reduce(function(a,i){ return a + num(i.value); }, 0), tot = $('#bd-total');
+  if (tot && document.activeElement !== tot) tot.value = r2(s);
+  el.textContent = '各类加起来 ' + fmtC(s, f ? f.dataset.cur : S.settings.budgetCur) + '。';
+}
+var budgetBase = null;
+function scaleBudget(total){
+  var ins = $$('#bd-rows input[name=cb]'), f = $('form[data-f=budget]'); if (!ins.length || !f) return;
+  if (!budgetBase || budgetBase.length !== ins.length) budgetBase = ins.map(function(i){ return num(i.value); });
+  var unit = f.dataset.cur === 'KRW' ? 1000 : 1, sum = budgetBase.reduce(function(a,b){ return a + b; }, 0);
+  var out = budgetBase.map(function(v){ return Math.round((sum > 0 ? v / sum : 1 / ins.length) * total / unit) * unit; });
+  out[out.length - 1] = Math.max(0, r2(out[out.length - 1] + total - out.reduce(function(a,b){ return a + b; }, 0)));
+  ins.forEach(function(i, k){ i.value = out[k]; });
+  budgetSum();
+}
 function roundCur(v, cur){ return cur === 'KRW' ? Math.round(v / 1000) * 1000 : Math.round(v); }
 
 function sheetRate(){
@@ -1328,7 +1354,7 @@ var CAT_HINTS = [
   ['交通出行', /地铁|公交|打车|出租|交通|高铁|火车|机票|t-?money|티머니|지하철|버스|택시|ktx|加油/i],
   ['日用品', /日用|纸巾|抽纸|洗衣|洗发|沐浴|牙膏|洗洁精|垃圾袋|衣架|收纳|다이소|올리브영|生活用品|化妆品/i],
   ['买菜做饭', /买菜|超市|菜市场|市场|蔬菜|水果|猪肉|牛肉|鸡肉|鸡胸|鸡蛋|大米|食材|마트|이마트|홈플러스|롯데마트|시장|컬리/i],
-  ['外卖外食', /外卖|餐厅|饭店|吃饭|午饭|晚饭|早饭|早餐|午餐|晚餐|咖啡|奶茶|饮料|炸鸡|面包|便利店|饭团|배달|배민|요기요|카페|커피|식당|편의점|치킨|스타벅스|gs25|세븐일레븐|이마트24/i]
+  ['外卖外食', /外卖|餐厅|饭店|吃饭|午饭|晚饭|早饭|早餐|午餐|晚餐|咖啡|拿铁|美式|奶茶|아메리카노|라떼|饮料|炸鸡|面包|便利店|饭团|배달|배민|요기요|카페|커피|식당|편의점|치킨|스타벅스|gs25|세븐일레븐|이마트24/i]
 ];
 function guessCat(text){
   var names = catNames();
@@ -1346,7 +1372,7 @@ function findAmounts(s){
     var sym = m[1] || '', word = (m[4] || '').toLowerCase(), cur = '';
     if (sym === '₩' || /韩元|韩币|원|won|krw/.test(word) || /[만천]/.test(m[0])) cur = 'KRW';
     else if (sym === '¥' || sym === '￥' || /人民币|块|元|rmb|cny/.test(word)) cur = 'CNY';
-    out.push({a:a, cur:cur, raw:m[0]});
+    out.push({a:a, cur:cur, raw:m[0], idx:m.index});
   }
   return out;
 }
@@ -1485,7 +1511,7 @@ function sheetPhotoHelp(){
     '<form class="form" data-f="ai-reply" autocomplete="off"><textarea name="reply" aria-label="Claude 的回复" placeholder="把 Claude 的回复粘贴到这里"></textarea><button class="btn soft" type="submit">读取并核对</button></form>' +
     '<p class="hint" style="margin-top:12px">现金付的，或者只想快点记：在账本里「说一句」，比如「现金 1.2万韩元 买菜」。</p>');
 }
-function sheetReview(items, title){
+function sheetReview(items, title, extra){
   Review.items = items;
   var cats = catNames();
   var html = sheetHead(esc(title)) + thumbsHtml() + '<form class="form" data-f="review" autocomplete="off"><div class="rv-list">' + items.map(function(x, i){
@@ -1497,13 +1523,128 @@ function sheetReview(items, title){
         '<option value="__in"' + (cv === '__in' ? ' selected' : '') + '>收入</option><option value="__save"' + (cv === '__save' ? ' selected' : '') + '>存钱</option></select>' +
         '<input type="date" name="date-' + i + '" value="' + x.date + '" aria-label="日期"></div>' +
       '<div class="grid2"><input type="text" name="note-' + i + '" value="' + esc(x.note) + '" placeholder="备注" aria-label="备注"><select name="pay-' + i + '" aria-label="付款方式">' + PAYS.map(function(o){ return '<option value="' + o[0] + '"' + (x.pay === o[0] ? ' selected' : '') + '>' + (o[0] ? o[1] : '付款方式') + '</option>'; }).join('') + '</select></div></div>';
-  }).join('') + '</div><div class="sheet-actions"><button class="btn primary" type="submit">' + ic('check') + '记下来</button></div></form>';
+  }).join('') + '</div>' + (extra || '') + '<div class="sheet-actions"><button class="btn primary" type="submit">' + ic('check') + '记下来</button></div></form>';
   openSheet(html);
+}
+
+/* ---------------- 敲两下背面：快捷指令把截图里的文字发过来 ---------------- */
+var HOME_URL = 'https://yuxian695-alt.github.io/-/';
+function inArtifact(){ return !!(window.claude && typeof window.claude.use === 'function'); }
+function appUrl(){ return !inArtifact() && /^https?:$/.test(location.protocol) ? location.origin + location.pathname.replace(/index\.html$/, '') : HOME_URL; }
+var MERCHANTS = /GS25|세븐일레븐|이마트24|이마트|홈플러스|롯데마트|코스트코|쿠팡|배달의민족|배민|요기요|스타벅스|메가커피|컴포즈커피|빽다방|투썸|이디야|다이소|올리브영|맥도날드|버거킹|롯데리아|맘스터치|파리바게뜨|뚜레쥬르|컬리|무신사|티머니|카카오\s*T|淘宝|天猫|拼多多|京东|美团|饿了么|星巴克|瑞幸|\bCU\b/i;
+var SHOT_TOTAL = /결제\s*금액|합\s*계|총\s*액|총\s*결제|총\s*금액|받을\s*금액|청구\s*금액|승인\s*금액|이용\s*금액|결제\s*완료|실\s*결제|결제했|实付|付款金额|支付金额|合计|总计|应付|支付成功|付款成功|交易金额/i;
+var SHOT_SKIP = /부가세|부가가치세|과세|면세|공급가|거스름|받은\s*금액|포인트|할인|적립|잔액|누적|한도|단가|수량|번호|전화|사업자|가맹|vat|tax|tel|找零|优惠|余额|积分|折扣|原价|立减|单号|编号|电话/i;
+function stripNoise(s){
+  return s.replace(/\d{4}\s*[.\-\/년年]\s*\d{1,2}\s*[.\-\/월月]\s*\d{1,2}\s*[일日]?/g, ' ')
+    .replace(/\d{1,2}\s*월\s*\d{1,2}\s*일|\d{1,2}\s*月\s*\d{1,2}\s*日/g, ' ')
+    .replace(/\d{1,2}:\d{2}(?::\d{2})?/g, ' ')
+    .replace(/\d{2,4}-\d{3,4}-\d{4}|\d{3}-\d{2}-\d{5}/g, ' ')
+    .replace(/[\d*]{4}[-\s][\d*]{4}[-\s][\d*]{4}[-\s][\d*]{2,4}/g, ' ')
+    .replace(/\(\d{3,4}\)|\*{2,}\d*/g, ' ')
+    .replace(/(^|\s)\d{1,2}\/\d{1,2}(?=\s|$)/g, ' ');
+}
+function shotDate(s){
+  var t = today(), y = +t.slice(0, 4), m;
+  function mk(Y, M, D, explicit){
+    M = +M; D = +D; if (!(M >= 1 && M <= 12 && D >= 1 && D <= 31)) return t;
+    var d = Y + '-' + pad(M) + '-' + pad(D);
+    if (d > t) return explicit ? t : (Y - 1) + '-' + pad(M) + '-' + pad(D);
+    return d;
+  }
+  if ((m = s.match(/(20\d{2})\s*[.\-\/년年]\s*(\d{1,2})\s*[.\-\/월月]\s*(\d{1,2})/))) return mk(+m[1], m[2], m[3], true);
+  if ((m = s.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일|(\d{1,2})\s*月\s*(\d{1,2})\s*日/))) return mk(y, m[1] || m[3], m[2] || m[4]);
+  if ((m = s.match(/(?:^|\s|\))(\d{1,2})\/(\d{1,2})(?=\s|$)/))) return mk(y, m[1], m[2]);
+  if (/어제|昨天/.test(s)) return addDays(t, -1);
+  return t;
+}
+function parseShot(raw){
+  var text = String(raw || '').replace(/\r/g, '');
+  var lines = text.split(/\n+/).map(function(l){ return l.trim(); }).filter(Boolean);
+  var isTotal = function(ln){ return SHOT_TOTAL.test(ln) || (/total/i.test(ln) && !/sub\s*-?\s*total/i.test(ln)); };
+  var cands = [];
+  lines.forEach(function(ln, i){
+    var clean = stripNoise(ln), prevTotal = i > 0 && isTotal(lines[i - 1]) && !findAmounts(stripNoise(lines[i - 1])).length;
+    findAmounts(clean).forEach(function(a){
+      if (!(a.a > 0) || a.a > 1e8) return;
+      var prefix = clean.slice(Math.max(0, a.idx - 10), a.idx), bare = !a.cur && a.raw.indexOf(',') < 0, sc = 0;
+      if (a.cur) sc += 3;
+      if (/\d,\d{3}/.test(a.raw)) sc += 1.5;
+      if (/\.\d{2}(?!\d)/.test(a.raw)) sc += 0.5;
+      if (isTotal(ln)) sc += 5; else if (prevTotal) sc += 4;
+      if (SHOT_SKIP.test(prefix)) sc -= 6;
+      if (/[-−]\s*$/.test(prefix)) sc += 1;
+      if (bare && a.a < 100) sc -= 2;
+      if (bare && a.a >= 1e6) sc -= 5;
+      cands.push({a:a.a, cur:a.cur, sc:sc});
+    });
+  });
+  if (!cands.length) return null;
+  cands.sort(function(x, y){ return (y.sc - x.sc) || (y.a - x.a); });
+  var best = cands[0];
+  var rivals = cands.filter(function(c){ return c.a !== best.a && c.sc >= Math.min(best.sc, 3); });
+  var confident = best.sc >= 3 && !rivals.some(function(c){ return c.sc >= best.sc - 0.5; }) && (best.sc >= 6.5 || !rivals.length);
+  var cur = best.cur || (/원|₩|krw/i.test(text) ? 'KRW' : /[¥￥元]|rmb|cny/i.test(text) ? 'CNY' : best.a >= 1000 ? 'KRW' : best.a < 100 ? 'CNY' : S.settings.budgetCur);
+  var mer = (text.match(MERCHANTS) || [''])[0].trim();
+  var pay = /카카오\s*페이|네이버\s*페이|토스|페이코|삼성\s*페이|애플\s*페이|apple\s*pay|微信|支付宝|云闪付/i.test(text) ? 'online' : /현금/.test(text) ? 'cash' : /카드|승인|일시불|신용|체크/.test(text) ? 'card' : '';
+  return { confident: confident, item: { type:'out', amount: cur === 'KRW' ? Math.round(best.a) : r2(best.a), cur:cur, cat: guessCat(text), date: shotDate(text), pay:pay, note: mer || '截图记账' } };
+}
+function ocrHtml(txt){ return txt ? '<details class="ocr"><summary>截图里认出的文字</summary><pre>' + esc(String(txt).slice(0, 2000)) + '</pre></details>' : ''; }
+function handleShot(){
+  var h = location.hash || '';
+  if (h.indexOf('#shot=') !== 0) return false;
+  var raw = h.slice(6), txt;
+  try { txt = decodeURIComponent(raw); } catch(e){ txt = raw; }
+  try { history.replaceState(null, '', location.pathname + location.search + '#ledger'); } catch(e){}
+  closeSheet();
+  view.tab = 'ledger';
+  var r = parseShot(txt);
+  if (!r){
+    view.month = monthOf(today()); render();
+    openSheet(sheetHead('截图里没找到金额') + '<p class="lead">可能截到的不是付款页面。付完款停在「支付成功」页或者小票上再敲两下，或者直接说一句、手动记。</p>' + ocrHtml(txt) +
+      '<div class="sheet-actions"><button class="btn primary" data-a="say-focus">说一句</button><button class="btn" data-a="close">手动记</button></div>');
+    return true;
+  }
+  var x = r.item, dup = S.ledger.some(function(z){ return z.type === 'out' && z.amount === x.amount && z.cur === x.cur && z.date === x.date; });
+  view.month = monthOf(x.date);
+  if (r.confident && !dup){
+    var rec = Object.assign({id:uid()}, x);
+    S.ledger.push(rec); commit('ledger');
+    toast('已自动记账：' + rec.cat + ' ' + fmtC(rec.amount, rec.cur), function(){ S.ledger = S.ledger.filter(function(z){ return z.id !== rec.id; }); commit('ledger'); toast('撤销了'); });
+  } else {
+    render();
+    Review.urls = [];
+    sheetReview([x], dup ? '这笔好像记过了，确认一下' : '没太认准，核对一下', ocrHtml(txt));
+  }
+  return true;
+}
+function sheetShortcut(){
+  var u = appUrl() + '#shot=';
+  openSheet(sheetHead('敲两下背面，自动记账') +
+    '<p class="lead">付完款停在「支付成功」页面或者小票上，敲两下手机背面：自动截图，手机自己认出上面的字，打开生活管家把这笔记好。文字识别在手机上完成，不花钱。</p>' +
+    (inArtifact() ? '<p class="note">这个功能要用 Safari 打开的生活管家（' + esc(HOME_URL) + '）。claude.ai 里的这个版本收不到快捷指令发来的内容，两边的账也不互通。</p>' : '') +
+    '<h4 class="sh-h">第一步：做一个快捷指令（只做一次）</h4><ol class="steps help">' +
+    '<li><span>打开「快捷指令」App，点右上角 <b>+</b></span></li>' +
+    '<li><span>点「添加操作」，搜索并添加 <b>截取屏幕快照</b></span></li>' +
+    '<li><span>再添加 <b>从图像中提取文本</b>，它会自动用上一步的截图</span></li>' +
+    '<li><span>再添加 <b>URL 编码</b>（搜「URL」就能找到），它会自动用上一步的文字</span></li>' +
+    '<li><span>再添加 <b>打开 URL</b>。点它的输入框，先粘贴下面这段，再紧跟着插入变量 <b>URL 编码后的文本</b></span></li></ol>' +
+    '<div class="copy-row"><code>' + esc(u) + '</code><button class="btn sm" data-a="copy-sc">' + ic('copy') + '复制</button></div>' +
+    '<ol class="steps help" style="counter-reset:s 5"><li><span>点最上面的名字，改成 <b>记一笔</b>，点「完成」</span></li></ol>' +
+    '<h4 class="sh-h">第二步：绑定敲两下</h4><ol class="steps help"><li><span>打开 <b>设置 → 辅助功能 → 触控 → 轻点背面 → 轻点两下</b>，选 <b>记一笔</b></span></li>' +
+    '<li><span>第一次运行时，快捷指令会问能不能打开这个网址，点 <b>允许</b></span></li></ol>' +
+    '<h4 class="sh-h">用起来是这样</h4><p class="hint">认准了会直接记好，屏幕下面出现「撤销」，记错了点一下就行。没认准、或者看起来记过了，会先让你核对。识别靠的是手机自带的文字识别：付款完成页、带「합계 / 결제금액 / 实付」的小票最准。</p>' +
+    '<p class="hint" style="margin-top:8px">快捷指令会用 Safari 打开生活管家，所以平时也请在 Safari 里用它，账才在一起。加到主屏幕时如果看到「作为 Web App 打开」，把它关掉。</p>' +
+    '<div class="sheet-actions"><button class="btn" data-a="shot-demo">用一张示例试试</button><button class="btn primary" data-a="close">知道了</button></div>');
 }
 
 /* ---------------- toast ---------------- */
 var toastTimer = 0;
-function toast(msg){ var el = $('#toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.hidden = true; }, 2600); }
+function toast(msg, undo){
+  var el = $('#toast');
+  el.textContent = msg;
+  if (undo){ var b = document.createElement('button'); b.type = 'button'; b.className = 'toast-btn'; b.textContent = '撤销'; b.onclick = function(){ el.hidden = true; undo(); }; el.appendChild(b); }
+  el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.hidden = true; }, undo ? 8000 : 2600);
+}
 
 /* ---------------- actions ---------------- */
 function setTab(t){
@@ -1579,6 +1720,9 @@ var A = {
     if (document.contains(el)){ el.disabled = false; el.innerHTML = ic('refresh') + '联网查今天的汇率'; }
   },
   'photo-help': sheetPhotoHelp,
+  shortcut: sheetShortcut,
+  'copy-sc': function(){ copyText(appUrl() + '#shot=', '已复制，去快捷指令的「打开 URL」里粘贴'); },
+  'shot-demo': function(){ location.hash = 'shot=' + encodeURIComponent('16:54\n결제 완료\n12,500원\nGS25 역삼점\n토스페이\n' + today().replace(/-/g, '.') + ' 14:05'); },
   'say-focus': function(){ var el = $('#say-in'); if (!el) return; el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); },
   'copy-prompt': function(){ copyText(visionPrompt(), '提示词已复制，去 Claude App 粘贴，再附上截图'); },
   'bd-add': function(){ $('#bd-rows').insertAdjacentHTML('beforeend', budgetRow('', 0)); var ins = $$('#bd-rows input[name=cn]'); ins[ins.length-1].focus(); budgetSum(); },
@@ -1806,6 +1950,7 @@ document.addEventListener('submit', function(e){
   e.preventDefault();
   var fn = F[f.dataset.f]; if (fn) fn(f);
 });
+document.addEventListener('focusin', function(e){ if (e.target.id === 'bd-total') budgetBase = null; });
 document.addEventListener('input', function(e){
   var el = e.target;
   if (el.id === 'q') doSearch(el.value);
@@ -1814,7 +1959,8 @@ document.addEventListener('input', function(e){
     var c = FOODS[el.value.trim()];
     if (c){ $('#fd-emoji').value = c[0]; $('#fd-unit').value = c[1]; $('#fd-place').value = c[3]; $('#fd-exp').value = addDays(today(), c[2]); $('#fd-hint').textContent = el.value.trim() + '一般' + c[3] + '能放 ' + c[2] + ' 天，到期日已经帮你填好。'; }
   }
-  else if (el.name === 'cb') budgetSum();
+  else if (el.name === 'cb'){ budgetBase = null; budgetSum(); }
+  else if (el.id === 'bd-total') scaleBudget(num(el.value));
 });
 document.addEventListener('change', function(e){
   var el = e.target;
@@ -1835,7 +1981,7 @@ document.addEventListener('change', function(e){
   if (el.name === 'cur' && el.closest('form[data-f=ledger]')) view.lgCur = el.value;
   if (el.name === 'cat' && el.closest('form[data-f=ledger]')) view.lgCat = el.value;
 });
-window.addEventListener('hashchange', function(){ var h = location.hash.slice(1); if (h && h !== view.tab) setTab(h); });
+window.addEventListener('hashchange', function(){ if (handleShot()) return; var h = location.hash.slice(1); if (h && h !== view.tab) setTab(h); });
 function refreshIfNewDay(){ if (view.day !== today()){ view.mealStart = today(); view.mealDay = today(); render(); } }
 window.addEventListener('focus', refreshIfNewDay);
 document.addEventListener('visibilitychange', function(){ if (!document.hidden) refreshIfNewDay(); });
@@ -1844,7 +1990,7 @@ document.addEventListener('visibilitychange', function(){ if (!document.hidden) 
 S = loadLocal() || sampleState();
 var h0 = location.hash.slice(1);
 if (TABS.some(function(t){ return t[0] === h0; })) view.tab = h0;
-render();
+if (!handleShot()) render();
 initCloud();
 initVision();
 })();

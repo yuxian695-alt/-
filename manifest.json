@@ -5,7 +5,7 @@
   "lang": "zh-CN",
   "start_url": "./index.html#home",
   "scope": "./",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#FAFBF7",
   "theme_color": "#FAFBF7",
   "icons": [
