@@ -365,6 +365,42 @@ button.li:hover{background:var(--card2)}
 .pick-list{display:grid;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px}
 .custom-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 
+/* money in two currencies + auto entry */
+.seg.btns{display:inline-flex;gap:3px}
+.seg.btns button{border:0;background:transparent;padding:7px 11px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink2);white-space:nowrap}
+.seg.btns button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.seg.cur2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.page-title .row{gap:8px}
+.amt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.amt-row .seg{min-height:54px;align-items:stretch}
+.amt-row .seg label{display:grid;place-items:center;padding:6px 10px}
+.tile small.plus{display:block;font-size:15px;font-weight:800;color:var(--ink2);font-variant-numeric:tabular-nums;line-height:1.3}
+.rate-chip{display:inline-flex;align-items:center;gap:5px;margin-top:6px;border:0;background:transparent;padding:0;color:var(--green);font-weight:700;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
+.rate-chip svg.ic{width:14px;height:14px}
+.btn.big{min-height:52px;font-size:16px}
+label.btn{cursor:pointer}
+.say{display:grid;gap:8px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.say textarea{font-family:var(--f-body);font-size:16px;min-height:76px}
+.rec .amt small{display:block;font-size:11.5px;color:var(--mute);font-weight:600;text-align:right}
+.rv-list{display:grid;gap:10px}
+.rv{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}
+.rv.dup{border-color:var(--warn)}
+.rv-amt{display:grid;grid-template-columns:minmax(0,1fr) 116px;gap:8px}
+.rv-amt input{font-size:20px!important;font-weight:800;font-variant-numeric:tabular-nums}
+.thumbs{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.thumbs img{height:120px;width:auto;max-width:none;border-radius:10px;border:1px solid var(--line);flex:none;object-fit:cover}
+.loading{display:flex;align-items:center;gap:12px;padding:16px 2px;color:var(--ink2);font-weight:700}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--mint2);border-top-color:var(--green);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+.rate-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font-weight:700}
+.rate-row input{font-size:22px;font-weight:800}
+.phone-only{display:none}
+.quick-row{gap:8px}
+.quick-row>*{flex:1 1 0}
+@media (max-width:780px){.phone-only{display:flex}}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
+.steps.help{margin:6px 0 0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:700;z-index:70;max-width:calc(100% - 32px);box-shadow:0 10px 30px -10px rgba(0,0,0,.5);text-align:center}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .22s ease-out}.sheet{animation:up .22s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}@keyframes up{from{opacity:0;transform:translateY(16px)}}}
 </style>
@@ -390,6 +426,7 @@ button.li:hover{background:var(--card2)}
 </div>
 <div class="sheet-wrap" id="sheet" hidden><div class="sheet-bg" data-a="close"></div><div class="sheet" id="sheet-box" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
+<input type="file" id="photo-in" class="vh" accept="image/*" multiple tabindex="-1" aria-hidden="true">
 <noscript><p style="padding:16px">需要开启 JavaScript 才能使用生活管家。</p></noscript>
 
 <script>
@@ -448,7 +485,9 @@ var ICONS = {
   copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
   swap:'<path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/>',
   leaf:'<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19 13 11"/>',
-  repeat:'<path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/>'
+  repeat:'<path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/>',
+  camera:'<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.6-2.2h5.4L16.3 7h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.7" r="3.4"/>',
+  refresh:'<path d="M19.5 11A7.5 7.5 0 0 0 6 7l-1.5 1.5M4.5 4.5v4h4M4.5 13A7.5 7.5 0 0 0 18 17l1.5-1.5M19.5 19.5v-4h-4"/>'
 };
 function ic(n, cls){ return '<svg class="ic ' + (cls||'') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[n]||'') + '</svg>'; }
 
@@ -507,13 +546,17 @@ var TABS = [['home','生活首页','home'],['ledger','生活账本','wallet'],['
 var LS_KEY = 'chunguo-life-v1';
 var SECTIONS = ['settings','ledger','fridge','meals','todos','shop'];
 var S = null;
-var view = { tab:'home', month: monthOf(today()), mealStart: today(), mealDay: today(), mealSlot: defaultSlot(), fridgeFilter:'all', todoFilter:'today', editTodo:null, lgType:'out', lgCat:null, pick:null, day: today() };
+var view = { tab:'home', month: monthOf(today()), mealStart: today(), mealDay: today(), mealSlot: defaultSlot(), fridgeFilter:'all', todoFilter:'today', editTodo:null, lgType:'out', lgCat:null, lgCur:null, pick:null, day: today() };
 function defaultSlot(){ var h = new Date().getHours(); return h < 10 ? 'b' : h < 14 ? 'l' : 'd'; }
+var DEFAULT_RATE = 195;   // 1 人民币 = ? 韩元；用户可以在账本里改
+var CURS = { KRW:{sym:'₩', name:'韩元', dp:0}, CNY:{sym:'¥', name:'人民币', dp:2} };
+var PAYS = [['','不记'],['cash','现金'],['card','刷卡'],['online','线上支付']];
+var PAY_NAME = { cash:'现金', card:'刷卡', online:'线上支付' };
 
 function freshState(){
-  return { v:1,
-    settings:{ sample:false, saveGoal:1000,
-      cats:[{n:'房租水电',b:1800},{n:'买菜做饭',b:600},{n:'外卖外食',b:500},{n:'日用品',b:300},{n:'交通出行',b:200},{n:'其他',b:600}],
+  return { v:2,
+    settings:{ sample:false, saveGoal:500000, budgetCur:'KRW', showCur:'split', rate:DEFAULT_RATE, rateAt:'',
+      cats:[{n:'房租水电',b:650000},{n:'买菜做饭',b:250000},{n:'外卖外食',b:200000},{n:'日用品',b:80000},{n:'交通出行',b:70000},{n:'其他',b:150000}],
       prefs:{ slots:['b','l','d'], maxTime:20, tags:['家常','快手'] }, stats:{} },
     ledger:[], fridge:[], meals:{}, todos:[], shop:[] };
 }
@@ -527,13 +570,15 @@ function sampleState(){
   var s = freshState(); s.settings.sample = true;
   var t = today(), ym = monthOf(t), dmax = +t.slice(8);
   function day(d){ return ym + '-' + pad(Math.min(d, dmax)); }
-  function L(d, type, cat, amount, note){ return {id:uid(), date:day(d), type:type, cat:cat, amount:amount, note:note}; }
+  function L(d, type, cat, amount, note, cur, pay){ return {id:uid(), date:day(d), type:type, cat:cat, amount:amount, note:note, cur:cur||'KRW', pay:pay||''}; }
   s.ledger = [
-    L(1,'in','收入',5000,'工资'), L(1,'out','房租水电',1500,'房租'), L(1,'save','储蓄',300,'月初先存一笔'),
-    L(2,'out','买菜做饭',25.6,'超市：番茄 鸡蛋 生菜 牛奶 土豆 香蕉'), L(4,'out','外卖外食',26,'黄焖鸡外卖'),
-    L(5,'out','日用品',69,'洗衣液、抽纸'), L(6,'out','房租水电',300,'水电燃气'), L(7,'out','交通出行',100,'地铁卡充值'),
-    L(9,'out','外卖外食',31,'麻辣烫'), L(11,'out','买菜做饭',38.5,'菜市场：排骨 玉米 青菜'), L(14,'out','其他',45,'理发'),
-    L(16,'out','外卖外食',18,'奶茶'), L(18,'out','买菜做饭',42.3,'超市：鸡胸肉 面条 青椒'), L(20,'out','其他',55,'朋友生日小礼物')
+    L(1,'in','收入',2200000,'工资'), L(1,'out','房租水电',550000,'月租 월세','KRW','online'), L(1,'save','储蓄',300000,'月初先存一笔'),
+    L(2,'out','买菜做饭',32800,'이마트 超市买菜','KRW','card'), L(4,'out','外卖外食',21000,'炸鸡外卖 배민','KRW','online'),
+    L(5,'out','日用品',12000,'다이소 收纳盒','KRW','card'), L(6,'out','房租水电',85000,'관리비 水电燃气','KRW','online'),
+    L(7,'out','交通出行',30000,'티머니 充值','KRW','cash'), L(9,'out','外卖外食',4500,'咖啡','KRW','card'),
+    L(11,'out','买菜做饭',18000,'市场 蔬菜水果','KRW','cash'), L(13,'out','日用品',58,'淘宝 衣架','CNY','online'),
+    L(14,'out','其他',15000,'理发','KRW','cash'), L(16,'out','外卖外食',3200,'便利店饭团','KRW','cash'),
+    L(18,'out','买菜做饭',27400,'쿠팡 鸡胸肉 面条','KRW','online'), L(20,'out','其他',199,'朋友生日礼物','CNY','online')
   ];
   s.fridge = [
     foodItem('生菜',1,addDays(t,1)), foodItem('鸡胸肉',200,addDays(t,2)), foodItem('番茄',3,addDays(t,3)),
@@ -550,18 +595,28 @@ function sampleState(){
   return s;
 }
 function isObj(x){ return x && typeof x === 'object' && !Array.isArray(x); }
+// 第一版的示例数据（全是人民币）不是用户自己的，直接换成新示例
+function isOldSample(settings){ return isObj(settings) && settings.sample && !settings.budgetCur; }
 function normalize(x){
   var f = freshState(), o = isObj(x) ? x : {};
   var st = isObj(o.settings) ? o.settings : {};
-  var s = { v:1, settings:{
-      sample: !!st.sample, saveGoal: num(st.saveGoal != null ? st.saveGoal : f.settings.saveGoal),
-      cats: Array.isArray(st.cats) && st.cats.length ? st.cats.filter(function(c){ return c && c.n; }).map(function(c){ return {n:String(c.n), b:num(c.b)}; }) : f.settings.cats,
+  var hadCats = Array.isArray(st.cats) && st.cats.length;
+  var bc = CURS[st.budgetCur] ? st.budgetCur : (hadCats ? 'CNY' : 'KRW');
+  var s = { v:2, settings:{
+      sample: !!st.sample, budgetCur: bc,
+      saveGoal: st.saveGoal != null ? num(st.saveGoal) : (bc === 'KRW' ? 500000 : 1000),
+      showCur: ['split','KRW','CNY'].indexOf(st.showCur) >= 0 ? st.showCur : 'split',
+      rate: num(st.rate) > 0 ? num(st.rate) : DEFAULT_RATE, rateAt: String(st.rateAt || ''),
+      cats: hadCats ? st.cats.filter(function(c){ return c && c.n; }).map(function(c){ return {n:String(c.n), b:num(c.b)}; }) : f.settings.cats,
       prefs: Object.assign({}, f.settings.prefs, isObj(st.prefs) ? st.prefs : {}),
       stats: isObj(st.stats) ? st.stats : {} } };
+  if (!s.settings.cats.length) s.settings.cats = f.settings.cats;
   if (!Array.isArray(s.settings.prefs.slots)) s.settings.prefs.slots = ['b','l','d'];
   if (!Array.isArray(s.settings.prefs.tags)) s.settings.prefs.tags = [];
   s.ledger = (Array.isArray(o.ledger) ? o.ledger : []).filter(function(r){ return r && r.date && isFinite(+r.amount); }).map(function(r){
-    return { id:String(r.id||uid()), date:String(r.date).slice(0,10), type: ['in','out','save'].indexOf(r.type) >= 0 ? r.type : 'out', cat:String(r.cat||'其他'), amount: r2(+r.amount), note:String(r.note||'') }; });
+    var cur = r.cur === 'KRW' ? 'KRW' : 'CNY';
+    return { id:String(r.id||uid()), date:String(r.date).slice(0,10), type: ['in','out','save'].indexOf(r.type) >= 0 ? r.type : 'out', cat:String(r.cat||'其他'),
+      amount: cur === 'KRW' ? Math.round(+r.amount) : r2(+r.amount), cur:cur, pay: PAY_NAME[r.pay] ? r.pay : '', note:String(r.note||'') }; });
   s.fridge = (Array.isArray(o.fridge) ? o.fridge : []).filter(function(i){ return i && i.name; }).map(function(i){
     return { id:String(i.id||uid()), name:String(i.name), emoji:String(i.emoji||'🍽️'), qty:num(i.qty), unit:String(i.unit||''), expire:String(i.expire||today()).slice(0,10), place:String(i.place||'冷藏'), added:String(i.added||today()) }; });
   s.meals = {};
@@ -577,7 +632,7 @@ function normalize(x){
 /* ---------------- storage: this device, plus the viewer's private store when opened on claude.ai ---------------- */
 var Sync = { col:null, dirty:{}, busy:false, timer:0, empty:false, err:'' };
 function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e) {} }
-function loadLocal(){ try { var raw = localStorage.getItem(LS_KEY); return raw ? normalize(JSON.parse(raw)) : null; } catch(e) { return null; } }
+function loadLocal(){ try { var raw = localStorage.getItem(LS_KEY); if (!raw) return null; var o = JSON.parse(raw); return isObj(o) && isOldSample(o.settings) ? null : normalize(o); } catch(e) { return null; } }
 function commit(){
   var secs = arguments.length ? Array.prototype.slice.call(arguments) : SECTIONS;
   saveLocal();
@@ -627,11 +682,14 @@ async function initCloud(){
   try { col = db.collection('data/users/' + id); snaps = await Promise.all(SECTIONS.map(function(k){ return col.doc(k).get(); })); }
   catch(e){ return; }
   Sync.col = col;
+  var next = null;
   if (snaps.some(function(s){ return s.exists; })){
-    var next = {}; SECTIONS.forEach(function(k){ next[k] = S[k]; });
+    next = {}; SECTIONS.forEach(function(k){ next[k] = S[k]; });
     snaps.forEach(function(s, i){ if (s.exists){ try { next[SECTIONS[i]] = JSON.parse(s.data().json); } catch(e){} } });
-    S = normalize(next); saveLocal(); render();
-  } else Sync.empty = true;
+    if (isOldSample(next.settings)) next = null;
+  }
+  if (next){ S = normalize(next); saveLocal(); render(); }
+  else Sync.empty = true;
   syncNote();
 }
 
@@ -657,14 +715,33 @@ function coverage(r){
   });
   return { have:have, total:r.ing.length, urg:urg, miss:miss };
 }
-function monthStats(ym){
+function otherCur(c){ return c === 'KRW' ? 'CNY' : 'KRW'; }
+function conv(a, from, to){ if (from === to) return a; var r = S.settings.rate || DEFAULT_RATE; return from === 'KRW' ? a / r : a * r; }
+function fmtC(n, cur){ var c = CURS[cur] || CURS.CNY; var v = c.dp ? r2(n) : Math.round(n); return (v < 0 ? '-' : '') + c.sym + Math.abs(v).toLocaleString('zh-CN', {minimumFractionDigits:c.dp, maximumFractionDigits:c.dp}); }
+function fmtRate(r){ return String(r2(r)); }
+function rateText(){ return '1 人民币 = ' + fmtRate(S.settings.rate) + ' 韩元'; }
+function dispCur(){ return S.settings.showCur === 'split' ? S.settings.budgetCur : S.settings.showCur; }
+function monthStats(ym, cur){
+  cur = cur || dispCur();
   var recs = S.ledger.filter(function(r){ return monthOf(r.date) === ym; });
-  function sum(t){ return r2(recs.filter(function(r){ return r.type === t; }).reduce(function(a,r){ return a + r.amount; }, 0)); }
-  var byCat = {};
-  recs.forEach(function(r){ if (r.type === 'out') byCat[r.cat] = r2((byCat[r.cat]||0) + r.amount); });
-  var budget = r2(S.settings.cats.reduce(function(a,c){ return a + c.b; }, 0));
-  var out = sum('out');
-  return { recs:recs, income:sum('in'), out:out, saved:sum('save'), byCat:byCat, budget:budget, left:r2(budget - out) };
+  var raw = { 'in':{KRW:0, CNY:0}, out:{KRW:0, CNY:0}, save:{KRW:0, CNY:0} }, tot = { 'in':0, out:0, save:0 }, byCat = {}, curs = {};
+  recs.forEach(function(r){
+    raw[r.type][r.cur] += r.amount; curs[r.cur] = 1;
+    var v = conv(r.amount, r.cur, cur); tot[r.type] += v;
+    if (r.type === 'out') byCat[r.cat] = (byCat[r.cat] || 0) + v;
+  });
+  var budget = S.settings.cats.reduce(function(a,c){ return a + conv(c.b, S.settings.budgetCur, cur); }, 0);
+  return { recs:recs, cur:cur, raw:raw, income:tot['in'], out:tot.out, saved:tot.save, byCat:byCat, budget:budget, left:budget - tot.out,
+    saveGoal: conv(S.settings.saveGoal, S.settings.budgetCur, cur), mixed: Object.keys(curs).length > 1 || (recs.length > 0 && !curs[cur]) };
+}
+// 分开看：两种钱各自的合计，预算币种排前面
+function splitHtml(o){
+  var b = S.settings.budgetCur, order = [b, otherCur(b)].filter(function(c){ return Math.abs(o[c]) > 0.004; });
+  if (!order.length) return '<b>' + fmtC(0, b) + '</b>';
+  return '<b>' + fmtC(o[order[0]], order[0]) + '</b>' + (order[1] ? '<small class="plus">+ ' + fmtC(o[order[1]], order[1]) + '</small>' : '');
+}
+function splitText(o){
+  return ['KRW','CNY'].filter(function(c){ return Math.abs(o[c]) > 0.004; }).map(function(c){ return fmtC(o[c], c); }).join(' + ');
 }
 function stat(ym){ var st = S.settings.stats[ym] || (S.settings.stats[ym] = {used:0, wasted:0}); return st; }
 function todayTodos(){
@@ -828,13 +905,15 @@ function renderHome(){
 
   html += '<div class="cols even">';
   // budget
+  var dc = ms.cur;
   html += '<article class="card"><header class="card-h"><span class="bubble">' + ic('wallet') + '</span><h2>本月生活预算</h2><span class="badge">' + (+ym.slice(5)) + ' 月账本</span></header>' +
-    (ms.left >= 0 ? '<div class="money">' + money(ms.left) + '</div><div class="small mute" style="margin-bottom:8px">这个月还能花</div>'
-                  : '<div class="money bad">超支 ' + money(-ms.left) + '</div><div class="small mute" style="margin-bottom:8px">接下来的日子省着点</div>') +
+    (ms.left >= 0 ? '<div class="money">' + fmtC(ms.left, dc) + '</div><div class="small mute" style="margin-bottom:8px">这个月还能花</div>'
+                  : '<div class="money bad">超支 ' + fmtC(-ms.left, dc) + '</div><div class="small mute" style="margin-bottom:8px">接下来的日子省着点</div>') +
     '<div class="bar' + (ms.left < 0 ? ' bad' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
-    '<div class="between small mute" style="margin-top:6px"><span>已支出 ' + money(ms.out) + '</span><span>总预算 ' + money(ms.budget) + '</span></div>' +
-    '<div class="trio"><div><span>本月收入</span><b>' + money(ms.income) + '</b></div><div><span>储蓄目标</span><b>' + money(S.settings.saveGoal) + '</b></div><div><span>已存入 · 手动记录</span><b>' + money(ms.saved) + '</b></div></div>' +
-    '<div class="actions"><button class="btn sm soft" data-a="go" data-tab="ledger">' + ic('plus') + '记一笔</button></div></article>';
+    '<div class="between small mute" style="margin-top:6px"><span>已支出 ' + fmtC(ms.out, dc) + '</span><span>总预算 ' + fmtC(ms.budget, dc) + '</span></div>' +
+    (ms.raw.out.KRW && ms.raw.out.CNY ? '<p class="hint" style="margin-top:6px">其中 ' + fmtC(ms.raw.out.KRW, 'KRW') + ' + ' + fmtC(ms.raw.out.CNY, 'CNY') + '，按 ' + rateText() + ' 折算</p>' : '') +
+    '<div class="trio"><div><span>本月收入</span><b>' + fmtC(ms.income, dc) + '</b></div><div><span>储蓄目标</span><b>' + fmtC(ms.saveGoal, dc) + '</b></div><div><span>已存入 · 手动记录</span><b>' + fmtC(ms.saved, dc) + '</b></div></div>' +
+    '<div class="actions">' + photoBtn('btn sm primary') + '<button class="btn sm soft" data-a="go" data-tab="ledger">' + ic('plus') + '记一笔</button></div></article>';
   // fridge
   html += '<article class="card"><header class="card-h"><span class="bubble g">' + ic('fridge') + '</span><h2>冰箱里还有好东西</h2><span class="badge">' + foods.length + ' 种食材</span></header>';
   if (foods.length){
@@ -878,51 +957,66 @@ function renderHome(){
 
 /* ledger */
 function renderLedger(){
-  var ym = view.month, ms = monthStats(ym), p = ym.split('-');
-  var html = '<div class="page-title"><div><h2><span class="hl">钱去哪了？</span>现在一眼看清</h2><p>收入、房租和生活预算放在一起，每个月还剩多少一目了然。</p></div>' +
-    '<div class="month-nav"><button class="icon-btn sm" data-a="month" data-d="-1" aria-label="上个月">' + ic('left') + '</button><b>' + p[0] + '年' + (+p[1]) + '月</b><button class="icon-btn sm" data-a="month" data-d="1" aria-label="下个月">' + ic('right') + '</button></div></div>';
+  var ym = view.month, sc = S.settings.showCur, split = sc === 'split', ms = monthStats(ym), dc = ms.cur, p = ym.split('-');
+  var html = '<div class="page-title"><div><h2><span class="hl">钱去哪了？</span>现在一眼看清</h2><p>韩元和人民币分开记，想看总数就一键全换成一种。</p></div>' +
+    '<div class="row"><div class="seg btns" role="group" aria-label="金额怎么显示">' + [['split','分开看'],['CNY','全换成 ¥'],['KRW','全换成 ₩']].map(function(o){
+      return '<button data-a="show-cur" data-c="' + o[0] + '" aria-pressed="' + (sc === o[0]) + '"' + (sc === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="month-nav"><button class="icon-btn sm" data-a="month" data-d="-1" aria-label="上个月">' + ic('left') + '</button><b>' + p[0] + '年' + (+p[1]) + '月</b><button class="icon-btn sm" data-a="month" data-d="1" aria-label="下个月">' + ic('right') + '</button></div></div></div>';
+  html += '<div class="phone-only quick-row">' + photoBtn('btn primary big') + '<button class="btn soft big" data-a="say-focus">' + ic('spark') + '说一句</button></div>';
   html += '<div class="cols"><div class="stack">';
-  html += '<div class="tiles2"><div class="tile"><span>本月收入</span><b>' + money(ms.income) + '</b></div><div class="tile"><span>本月支出</span><b>' + money(ms.out) + '</b></div></div>';
-  html += '<div class="tile mint' + (ms.left < 0 ? ' bad' : '') + '"><span>' + (ms.left < 0 ? '已经超出预算' : '可支配预算余额') + '</span><b>' + money(Math.abs(ms.left)) + '</b></div>';
-  // categories
+  html += '<div class="tiles2"><div class="tile"><span>本月收入</span>' + (split ? splitHtml(ms.raw['in']) : '<b>' + fmtC(ms.income, dc) + '</b>') + '</div>' +
+    '<div class="tile"><span>本月支出</span>' + (split ? splitHtml(ms.raw.out) : '<b>' + fmtC(ms.out, dc) + '</b>') + '</div></div>';
+  html += '<div class="tile mint' + (ms.left < 0 ? ' bad' : '') + '"><span>' + (ms.left < 0 ? '已经超出预算' : '可支配预算余额') + (split && ms.mixed ? '（换算成' + CURS[dc].name + '）' : '') + '</span><b>' + fmtC(Math.abs(ms.left), dc) + '</b>' +
+    '<button class="rate-chip" data-a="rate">汇率 ' + rateText() + (S.settings.rateAt ? '' : ' · 默认值，点这里改') + ic('edit') + '</button></div>';
   var cats = S.settings.cats.slice(), extra = Object.keys(ms.byCat).filter(function(n){ return !cats.some(function(c){ return c.n === n; }); });
   extra.forEach(function(n){ cats.push({n:n, b:0}); });
   html += '<article class="card"><header class="card-h"><h2>每一份预算，都有去处</h2><button class="btn sm" data-a="budget">调整预算</button></header><div class="cat-bars">' +
     cats.map(function(c, i){
-      var sp = ms.byCat[c.n] || 0, over = c.b ? sp > c.b : sp > 0, w = c.b ? Math.min(100, sp / c.b * 100) : (sp ? 100 : 0);
-      return '<div class="cat-bar"><div class="between"><b class="row" style="gap:8px"><span class="dot" style="background:' + CAT_COLORS[i % CAT_COLORS.length] + '"></span>' + esc(c.n) + '</b><span>' + (over && c.b ? '<span class="over">超出 ' + money(sp - c.b) + '</span> · ' : '') + money(sp) + ' / ' + money(c.b) + '</span></div><div class="bar' + (over ? ' bad' : '') + '"><i style="width:' + w.toFixed(1) + '%"></i></div></div>';
-    }).join('') + '</div></article>';
-  // savings
-  var sg = S.settings.saveGoal, spct = sg ? Math.min(100, ms.saved / sg * 100) : 0;
+      var b = conv(c.b, S.settings.budgetCur, dc), sp = ms.byCat[c.n] || 0, over = b ? sp > b + 0.004 : sp > 0, w = b ? Math.min(100, sp / b * 100) : (sp ? 100 : 0);
+      return '<div class="cat-bar"><div class="between"><b class="row" style="gap:8px"><span class="dot" style="background:' + CAT_COLORS[i % CAT_COLORS.length] + '"></span>' + esc(c.n) + '</b><span>' + (over && b ? '<span class="over">超出 ' + fmtC(sp - b, dc) + '</span> · ' : '') + fmtC(sp, dc) + ' / ' + fmtC(b, dc) + '</span></div><div class="bar' + (over ? ' bad' : '') + '"><i style="width:' + w.toFixed(1) + '%"></i></div></div>';
+    }).join('') + '</div>' + (ms.mixed ? '<p class="hint" style="margin-top:12px">两种钱都按 ' + rateText() + ' 换算成' + CURS[dc].name + '再比预算。</p>' : '') + '</article>';
+  var spct = ms.saveGoal ? Math.min(100, ms.saved / ms.saveGoal * 100) : 0;
   html += '<article class="card"><header class="card-h"><span class="bubble g">' + ic('leaf') + '</span><h2>储蓄目标</h2><span class="badge">' + spct.toFixed(0) + '%</span></header>' +
-    '<div class="between" style="margin-bottom:8px"><span class="money" style="font-size:24px">' + money(ms.saved) + '</span><span class="mute small">目标 ' + money(sg) + '</span></div><div class="bar"><i style="width:' + spct.toFixed(1) + '%"></i></div>' +
-    '<p class="hint" style="margin-top:8px">存钱是手动记录的：转进存款账户后，在右边选「存钱」记一笔。收入减支出减存款，这个月还剩 ' + money(ms.income - ms.out - ms.saved) + '。</p></article>';
+    '<div class="between" style="margin-bottom:8px"><span class="money" style="font-size:24px">' + fmtC(ms.saved, dc) + '</span><span class="mute small">目标 ' + fmtC(ms.saveGoal, dc) + '</span></div><div class="bar"><i style="width:' + spct.toFixed(1) + '%"></i></div>' +
+    '<p class="hint" style="margin-top:8px">存钱是手动记录的：转进存款账户后，选「存钱」记一笔。收入减支出减存款，这个月还剩 ' + fmtC(ms.income - ms.out - ms.saved, dc) + '。</p></article>';
   html += '</div><div class="stack">';
-  // form
-  var type = view.lgType, cat = view.lgCat || (S.settings.cats[1] || S.settings.cats[0] || {n:'其他'}).n;
+  // 自动识别
+  html += '<article class="card"><header class="card-h"><span class="bubble">' + ic('camera') + '</span><h2>拍一下，自动记账</h2></header>' +
+    '<p class="lead">付款截图、超市小票、刷卡单都行，可以一次选好几张。认出来的金额、韩元还是人民币、类别，你核对一下再记。</p>' +
+    photoBtn('btn primary wide big') +
+    '<form class="say" data-f="say" autocomplete="off"><label class="field" for="say-in">现金付的，或者懒得拍照？说一句就行</label>' +
+    '<textarea id="say-in" name="say" rows="2" placeholder="现金 1.2万韩元 买菜&#10;地铁 1400；淘宝 58元 衣架"></textarea>' +
+    '<button class="btn soft" type="submit">' + ic('spark') + '识别这句话</button></form></article>';
+  // 手动
+  var type = view.lgType, cat = view.lgCat || (S.settings.cats[1] || S.settings.cats[0] || {n:'其他'}).n, cur = view.lgCur || S.settings.budgetCur;
   var defDate = ym === monthOf(today()) ? today() : ym + '-01';
-  html += '<article class="card"><header class="card-h"><span class="bubble">' + ic('plus') + '</span><h2>记一笔</h2></header><form class="form" data-f="ledger" autocomplete="off">' +
+  html += '<article class="card"><header class="card-h"><span class="bubble">' + ic('plus') + '</span><h2>手动记一笔</h2></header><form class="form" data-f="ledger" autocomplete="off">' +
     '<div class="seg" role="radiogroup" aria-label="类型">' + [['out','支出'],['in','收入'],['save','存钱']].map(function(o){ return '<label><input type="radio" name="type" value="' + o[0] + '"' + (type === o[0] ? ' checked' : '') + '>' + o[1] + '</label>'; }).join('') + '</div>' +
-    '<label class="field">金额<input type="text" inputmode="decimal" id="lg-amount" name="amount" class="amount-in" placeholder="0.00" required></label>' +
+    '<div class="amt-row"><label class="field">金额<input type="text" inputmode="decimal" id="lg-amount" name="amount" class="amount-in" placeholder="比如 12000 或 1.2万" required></label>' +
+    '<div class="seg cur2" role="radiogroup" aria-label="币种">' + ['KRW','CNY'].map(function(c){ return '<label><input type="radio" name="cur" value="' + c + '"' + (cur === c ? ' checked' : '') + '>' + CURS[c].sym + ' ' + CURS[c].name + '</label>'; }).join('') + '</div></div>' +
     '<div class="field" id="lg-cats"' + (type === 'out' ? '' : ' hidden') + '><span>花在哪</span><div class="chips">' + S.settings.cats.map(function(c){ return '<label class="chip"><input type="radio" name="cat" value="' + esc(c.n) + '"' + (c.n === cat ? ' checked' : '') + '>' + esc(c.n) + '</label>'; }).join('') + '</div></div>' +
+    '<div class="field"><span>怎么付的</span><div class="chips">' + PAYS.map(function(o){ return '<label class="chip"><input type="radio" name="pay" value="' + o[0] + '"' + (o[0] === '' ? ' checked' : '') + '>' + o[1] + '</label>'; }).join('') + '</div></div>' +
     '<div class="grid2"><label class="field">备注<input type="text" id="lg-note" name="note" placeholder="' + (type === 'in' ? '比如：工资' : type === 'save' ? '比如：转入存款' : '比如：超市买菜') + '"></label><label class="field">日期<input type="date" id="lg-date" name="date" value="' + defDate + '" required></label></div>' +
     '<button class="btn primary wide" type="submit">' + ic('check') + '记下来</button></form></article>';
-  // records
+  // 明细
   var recs = ms.recs.slice().sort(function(a,b){ return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
   html += '<article class="card"><header class="card-h"><h2>这个月的明细</h2><span class="badge">' + recs.length + ' 笔</span></header>';
   if (recs.length){
     var groups = {}, order = [];
     recs.forEach(function(r){ if (!groups[r.date]){ groups[r.date] = []; order.push(r.date); } groups[r.date].push(r); });
     html += order.map(function(d){
-      var outSum = groups[d].filter(function(r){ return r.type === 'out'; }).reduce(function(a,r){ return a + r.amount; }, 0);
-      return '<div class="day-h"><span>' + md(d) + ' ' + wkShort(d) + '</span><span>' + (outSum ? '支出 ' + money(outSum) : '') + '</span></div>' + groups[d].map(function(r){
+      var outs = groups[d].filter(function(r){ return r.type === 'out'; }), daySum;
+      if (split){ var o = {KRW:0, CNY:0}; outs.forEach(function(r){ o[r.cur] += r.amount; }); daySum = splitText(o); }
+      else daySum = outs.length ? fmtC(outs.reduce(function(a,r){ return a + conv(r.amount, r.cur, dc); }, 0), dc) : '';
+      return '<div class="day-h"><span>' + md(d) + ' ' + wkShort(d) + '</span><span>' + (daySum ? '支出 ' + daySum : '') + '</span></div>' + groups[d].map(function(r){
         var ci = S.settings.cats.findIndex(function(c){ return c.n === r.cat; });
         var color = r.type === 'in' ? 'var(--ok)' : r.type === 'save' ? 'var(--c4)' : CAT_COLORS[(ci < 0 ? S.settings.cats.length : ci) % CAT_COLORS.length];
         var lab = r.type === 'in' ? '收入' : r.type === 'save' ? '存钱' : r.cat;
-        return '<div class="rec"><span class="dot" style="background:' + color + '"></span><div class="tx"><b>' + esc(r.note || lab) + '</b><small>' + esc(lab) + '</small></div><span class="amt ' + r.type + '">' + (r.type === 'in' ? '+' : r.type === 'save' ? '存 ' : '-') + money(r.amount).replace('-','') + '</span><button class="icon-btn sm" data-a="lg-del" data-id="' + r.id + '" aria-label="删除这笔">' + ic('trash') + '</button></div>';
+        var approx = !split && r.cur !== dc ? '<small>≈ ' + fmtC(conv(r.amount, r.cur, dc), dc) + '</small>' : '';
+        return '<div class="rec"><span class="dot" style="background:' + color + '"></span><div class="tx"><b>' + esc(r.note || lab) + '</b><small>' + esc(lab) + (r.pay ? ' · ' + PAY_NAME[r.pay] : '') + '</small></div><span class="amt ' + r.type + '">' + (r.type === 'in' ? '+' : r.type === 'save' ? '存 ' : '-') + fmtC(r.amount, r.cur) + approx + '</span><button class="icon-btn sm" data-a="lg-del" data-id="' + r.id + '" aria-label="删除这笔">' + ic('trash') + '</button></div>';
       }).join('');
     }).join('');
-  } else html += '<div class="empty"><b>这个月还没有记账</b>从工资或者今天买的菜开始记吧。</div>';
+  } else html += '<div class="empty"><b>这个月还没有记账</b>拍一张付款截图，或者说一句「现金 12000韩元 买菜」。</div>';
   html += '</article></div></div>';
   return html;
 }
@@ -1085,6 +1179,8 @@ function openSheet(html){
   if (first) try { first.focus({preventScroll:true}); } catch(e){}
 }
 function closeSheet(){
+  if (Vision.ctrl){ Vision.ctrl.abort(); Vision.ctrl = null; }
+  if (Review.urls.length){ Review.urls.forEach(function(u){ URL.revokeObjectURL(u); }); Review.urls = []; }
   $('#sheet').hidden = true; $('#sheet-box').innerHTML = '';
   document.documentElement.style.overflow = '';
   if (lastFocus && document.contains(lastFocus)) try { lastFocus.focus({preventScroll:true}); } catch(e){}
@@ -1106,15 +1202,30 @@ function sheetFood(id){
     '<button class="btn primary" type="submit">' + (f ? '保存' : '放进冰箱') + '</button></div></form>');
 }
 function sheetBudget(){
+  var bc = S.settings.budgetCur;
   var rows = S.settings.cats.map(function(c){ return budgetRow(c.n, c.b); }).join('');
-  openSheet(sheetHead('调整每月预算') + '<form class="form" data-f="budget" autocomplete="off"><p class="lead" style="margin:0">每一类每个月打算花多少。改名不会影响已经记过的账。</p>' +
+  openSheet(sheetHead('调整每月预算') + '<form class="form" data-f="budget" data-cur="' + bc + '" autocomplete="off"><p class="lead" style="margin:0">每一类每个月打算花多少。改名不会影响已经记过的账。</p>' +
+    '<div class="field"><span>预算用哪种钱</span><div class="seg cur2" style="max-width:280px">' + ['KRW','CNY'].map(function(c){ return '<label><input type="radio" name="bcur" value="' + c + '"' + (bc === c ? ' checked' : '') + '>' + CURS[c].sym + ' ' + CURS[c].name + '</label>'; }).join('') + '</div><span class="hint">切换时，下面的数字会按 ' + rateText() + ' 换算过去。</span></div>' +
     '<div id="bd-rows" style="display:grid;gap:8px">' + rows + '</div><div><button type="button" class="btn sm" data-a="bd-add">' + ic('plus') + '加一类</button></div>' +
     '<label class="field">每月储蓄目标<input type="number" name="saveGoal" min="0" step="any" inputmode="decimal" value="' + S.settings.saveGoal + '"></label>' +
     '<p class="hint" id="bd-sum"></p><div class="sheet-actions"><button class="btn primary" type="submit">保存</button></div></form>');
   budgetSum();
 }
 function budgetRow(n, b){ return '<div class="bd-row"><input type="text" name="cn" value="' + esc(n) + '" placeholder="类别" aria-label="类别名" required><input type="number" name="cb" value="' + b + '" min="0" step="any" inputmode="decimal" aria-label="每月预算"><button type="button" class="icon-btn" data-a="bd-del" aria-label="删掉这一类">' + ic('trash') + '</button></div>'; }
-function budgetSum(){ var el = $('#bd-sum'); if (!el) return; var s = $$('#bd-rows input[name=cb]').reduce(function(a,i){ return a + num(i.value); }, 0); el.textContent = '每月总预算 ' + money(s) + '。'; }
+function budgetSum(){ var el = $('#bd-sum'); if (!el) return; var f = el.closest('form'), s = $$('#bd-rows input[name=cb]').reduce(function(a,i){ return a + num(i.value); }, 0); el.textContent = '每月总预算 ' + fmtC(s, f ? f.dataset.cur : S.settings.budgetCur) + '。'; }
+function roundCur(v, cur){ return cur === 'KRW' ? Math.round(v / 1000) * 1000 : Math.round(v); }
+
+function sheetRate(){
+  var r = S.settings.rate;
+  openSheet(sheetHead('汇率') + '<form class="form" data-f="rate" autocomplete="off"><div class="rate-row"><span>1 人民币 =</span><input type="text" inputmode="decimal" id="rate-in" name="rate" value="' + fmtRate(r) + '" aria-label="1 人民币等于多少韩元"><span>韩元</span></div>' +
+    '<p class="hint" id="rate-eg">' + rateEg(r) + '</p>' +
+    '<p class="hint" id="rate-hint">' + (S.settings.rateAt ? '上次更新：' + esc(S.settings.rateAt) : '现在是默认值，不一定准。打开银行 App 或者搜「人民币 韩元 汇率」，把数字填进来。') + '</p>' +
+    (canFetchRate() ? '<div><button type="button" class="btn sm" data-a="rate-fetch">' + ic('refresh') + '联网查今天的汇率</button></div>' : '') +
+    '<p class="hint">汇率只影响换算出来的总数。每一笔记的是多少韩元、多少人民币，原样保留。</p>' +
+    '<div class="sheet-actions"><button class="btn primary" type="submit">保存</button></div></form>');
+}
+function rateEg(r){ r = num(r); return r > 0 ? '₩10,000 ≈ ' + fmtC(10000 / r, 'CNY') + '　·　¥100 ≈ ' + fmtC(100 * r, 'KRW') : ''; }
+function canFetchRate(){ return !(window.claude && typeof window.claude.use === 'function') && /^https?:$/.test(location.protocol); }
 
 function sheetGenerate(){
   var p = S.settings.prefs;
@@ -1155,7 +1266,7 @@ function sheetBought(){
   if (!items.length){ toast('先在清单里勾上买到的东西'); return; }
   openSheet(sheetHead('买好了，收进冰箱') + '<form class="form" data-f="bought" autocomplete="off"><p class="lead" style="margin:0">勾上要放进冰箱的。到期日按常见保存天数填好了，可以改。</p><div>' +
     items.map(function(x){ var c = FOODS[x.n]; return '<div class="bought-row"><label class="check-row"><input type="checkbox" name="in-' + x.id + '"' + (c ? ' checked' : '') + '><span>' + (c ? c[0] + ' ' : '') + esc(x.n) + ' <span class="mute">' + esc(shopQty(x)) + '</span></span></label><input type="date" name="exp-' + x.id + '" value="' + addDays(t, c ? c[2] : 7) + '" aria-label="' + esc(x.n) + '的到期日"></div>'; }).join('') + '</div>' +
-    '<div class="grid2"><label class="field">这次一共花了<input type="text" inputmode="decimal" name="amount" placeholder="不想记可以空着"></label><label class="field">记到账本哪一类<select name="cat">' + S.settings.cats.map(function(c){ return '<option' + (c.n === '买菜做饭' ? ' selected' : '') + '>' + esc(c.n) + '</option>'; }).join('') + '</select></label></div>' +
+    '<div class="grid2"><div class="field"><span>这次一共花了</span><div class="rv-amt"><input type="text" inputmode="decimal" name="amount" placeholder="不想记可以空着" aria-label="花了多少"><select name="cur" aria-label="币种">' + curOpts(view.lgCur || S.settings.budgetCur) + '</select></div></div><label class="field">记到账本哪一类<select name="cat">' + S.settings.cats.map(function(c){ return '<option' + (c.n === '买菜做饭' ? ' selected' : '') + '>' + esc(c.n) + '</option>'; }).join('') + '</select></label></div>' +
     '<div class="sheet-actions"><button class="btn primary" type="submit">' + ic('check') + '完成</button></div></form>');
 }
 function sheetSearch(){
@@ -1174,7 +1285,7 @@ function doSearch(q){
   var td = S.todos.filter(function(x){ return has(x.t); });
   if (td.length) groups.push(['待办', td.slice(0,6).map(function(x){ return '<button class="li" data-a="go" data-tab="todo"><span class="emo">' + (x.done ? '✅' : '⬜') + '</span><span class="tx"><b>' + esc(x.t) + '</b><small>' + md(x.d) + '</small></span></button>'; })]);
   var lg = S.ledger.filter(function(r){ return has(r.note) || has(r.cat); }).sort(function(a,b){ return a.date < b.date ? 1 : -1; });
-  if (lg.length) groups.push(['账目', lg.slice(0,6).map(function(r){ return '<button class="li" data-a="go-month" data-m="' + monthOf(r.date) + '"><span class="emo">' + (r.type === 'in' ? '💰' : r.type === 'save' ? '🐷' : '🧾') + '</span><span class="tx"><b>' + esc(r.note || r.cat) + '</b><small>' + r.date + ' · ' + esc(r.cat) + '</small></span><span class="amt">' + money(r.amount) + '</span></button>'; })]);
+  if (lg.length) groups.push(['账目', lg.slice(0,6).map(function(r){ return '<button class="li" data-a="go-month" data-m="' + monthOf(r.date) + '"><span class="emo">' + (r.type === 'in' ? '💰' : r.type === 'save' ? '🐷' : '🧾') + '</span><span class="tx"><b>' + esc(r.note || r.cat) + '</b><small>' + r.date + ' · ' + esc(r.cat) + '</small></span><span class="amt">' + fmtC(r.amount, r.cur) + '</span></button>'; })]);
   var sh = S.shop.filter(function(x){ return has(x.n); });
   if (sh.length) groups.push(['采购清单', sh.slice(0,6).map(function(x){ return '<button class="li" data-a="go" data-tab="shop"><span class="emo">🛒</span><span class="tx"><b>' + esc(x.n) + '</b><small>' + (x.done ? '已买到' : '待买') + '</small></span></button>'; })]);
   box.innerHTML = groups.length ? groups.map(function(g){ return '<div><h4>' + g[0] + '</h4><div class="list">' + g[1].join('') + '</div></div>'; }).join('') : '<p class="hint">没找到「' + esc(q) + '」相关的内容。</p>';
@@ -1188,6 +1299,206 @@ function sheetBackup(){
     '<div class="row"><input type="file" id="bk-file" accept=".json,application/json,text/plain" aria-label="选择备份文件" style="max-width:100%;font-size:13px"><button class="btn" data-a="bk-import">用这份备份恢复</button></div>' +
     '<hr style="border:0;border-top:1px solid var(--line);width:100%;margin:6px 0">' +
     '<div class="row"><button class="btn danger" data-a="bk-wipe">清空所有数据</button><span class="hint">会删掉账本、冰箱、菜单、待办和清单，删前建议先复制一份备份。</span></div></div>');
+}
+
+/* ---------------- 自动识别记账 ---------------- */
+var Vision = { sample:null, max:1, ctrl:null };
+var Review = { items:[], urls:[] };
+async function initVision(){
+  var c = window.claude;
+  if (!c || typeof c.use !== 'function') return;
+  try {
+    var s = await c.use('sample'); if (!s) return;
+    var lim = await s.limits().catch(function(){ return null; });
+    if (!lim || !lim.images) return;
+    Vision.sample = s; Vision.max = Math.max(1, lim.images.maxCount || 1);
+    var a = document.activeElement;
+    if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) && $('#sheet').hidden) render();
+  } catch(e){}
+}
+function photoBtn(cls){
+  var inner = ic('camera') + '截图 / 拍小票';
+  return Vision.sample ? '<label class="' + cls + '" for="photo-in" role="button" tabindex="0">' + inner + '</label>'
+                       : '<button class="' + cls + '" data-a="photo-help">' + inner + '</button>';
+}
+function curOpts(sel){ return ['KRW','CNY'].map(function(c){ return '<option value="' + c + '"' + (sel === c ? ' selected' : '') + '>' + CURS[c].sym + ' ' + CURS[c].name + '</option>'; }).join(''); }
+function catNames(){ return S.settings.cats.map(function(c){ return c.n; }); }
+var CAT_HINTS = [
+  ['房租水电', /房租|租金|水电|电费|水费|燃气|煤气|网费|话费|物业|管理费|월세|관리비|전기|가스|통신/i],
+  ['交通出行', /地铁|公交|打车|出租|交通|高铁|火车|机票|t-?money|티머니|지하철|버스|택시|ktx|加油/i],
+  ['日用品', /日用|纸巾|抽纸|洗衣|洗发|沐浴|牙膏|洗洁精|垃圾袋|衣架|收纳|다이소|올리브영|生活用品|化妆品/i],
+  ['买菜做饭', /买菜|超市|菜市场|市场|蔬菜|水果|猪肉|牛肉|鸡肉|鸡胸|鸡蛋|大米|食材|마트|이마트|홈플러스|롯데마트|시장|컬리/i],
+  ['外卖外食', /外卖|餐厅|饭店|吃饭|午饭|晚饭|早饭|早餐|午餐|晚餐|咖啡|奶茶|饮料|炸鸡|面包|便利店|饭团|배달|배민|요기요|카페|커피|식당|편의점|치킨|스타벅스|gs25|세븐일레븐|이마트24/i]
+];
+function guessCat(text){
+  var names = catNames();
+  for (var i = 0; i < CAT_HINTS.length; i++) if (CAT_HINTS[i][1].test(text) && names.indexOf(CAT_HINTS[i][0]) >= 0) return CAT_HINTS[i][0];
+  return names.indexOf('其他') >= 0 ? '其他' : names[names.length - 1];
+}
+// 找出一句话里的金额：12000、12,000원、1.2万韩元、3만원、5천원、¥58、58元
+function findAmounts(s){
+  var re = /([₩¥￥])?\s*(\d+(?:\.\d+)?\s*[万만]\s*\d+\s*[千천]|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*([万만千천]|[kK](?![a-zA-Z]))?\s*(韩元|韩币|원|won|krw|人民币|块钱|块|元|rmb|cny)?/gi;
+  var out = [], m;
+  while ((m = re.exec(s))){
+    var body = m[2], a, mm = body.match(/^(\d+(?:\.\d+)?)\s*[万만]\s*(\d+)\s*[千천]$/);
+    if (mm) a = num(mm[1]) * 10000 + num(mm[2]) * 1000;
+    else { a = num(body.replace(/,/g, '')); var u = m[3]; if (u === '万' || u === '만') a *= 10000; else if (u) a *= 1000; }
+    var sym = m[1] || '', word = (m[4] || '').toLowerCase(), cur = '';
+    if (sym === '₩' || /韩元|韩币|원|won|krw/.test(word) || /[만천]/.test(m[0])) cur = 'KRW';
+    else if (sym === '¥' || sym === '￥' || /人民币|块|元|rmb|cny/.test(word)) cur = 'CNY';
+    out.push({a:a, cur:cur, raw:m[0]});
+  }
+  return out;
+}
+function amountOf(v, cur){ var f = findAmounts(String(v || ''))[0]; if (!f) return 0; return cur === 'KRW' ? Math.round(f.a) : r2(f.a); }
+function takeDate(s){
+  var t = today(), d = '', m = s.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?|(\d{1,2})\/(\d{1,2})(?!\d)/);
+  if (m){
+    var mo = +(m[1] || m[3]), da = +(m[2] || m[4]), y = +t.slice(0,4);
+    if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31){ d = y + '-' + pad(mo) + '-' + pad(da); if (d > t) d = (y - 1) + '-' + pad(mo) + '-' + pad(da); s = s.replace(m[0], ' '); }
+  }
+  if (!d && /前天|그저께/.test(s)) d = addDays(t, -2);
+  else if (!d && /昨天|어제/.test(s)) d = addDays(t, -1);
+  return { date: d || t, rest: s };
+}
+function parseOne(s, date){
+  var amts = findAmounts(s); if (!amts.length) return null;
+  var pick = amts.filter(function(x){ return x.cur; })[0] || amts.slice().sort(function(a,b){ return b.a - a.a; })[0];
+  if (!(pick.a > 0)) return null;
+  var cur = pick.cur;
+  if (!cur){
+    if (/韩元|韩币|원|₩|won|krw|카카오|토스|네이버|쿠팡|배민/i.test(s)) cur = 'KRW';
+    else if (/人民币|rmb|cny|¥|￥|微信|支付宝|淘宝|拼多多|京东/i.test(s)) cur = 'CNY';
+    else cur = pick.a < 100 ? 'CNY' : pick.a >= 1000 ? 'KRW' : (view.lgCur || S.settings.budgetCur);
+  }
+  var pay = /现金|현금|cash/i.test(s) ? 'cash' : /刷卡|信用卡|借记卡|카드|card/i.test(s) ? 'card' : /微信|支付宝|线上|网购|淘宝|拼多多|京东|카카오|토스|네이버|쿠팡|배민|转账/i.test(s) ? 'online' : '';
+  var type = /工资|收入|到账|生活费|奖学金|报销|退款|월급|용돈/.test(s) ? 'in' : /存钱|存了|储蓄|存款|저금|적금/.test(s) ? 'save' : 'out';
+  var note = s.replace(pick.raw, ' ')
+    .replace(/现金|현금|刷卡|信用卡|借记卡|카드|线上支付|微信支付|花了|付了|用了|一共|总共|大概|左右|韩元|韩币|人民币|块钱|今天|昨天|前天/g, ' ')
+    .replace(/[，,、:：]/g, ' ').replace(/\s+/g, ' ').trim();
+  return { type:type, amount: cur === 'KRW' ? Math.round(pick.a) : r2(pick.a), cur:cur, cat: type === 'out' ? guessCat(s) : type === 'in' ? '收入' : '储蓄', date: date || today(), pay:pay, note: note.slice(0, 40) };
+}
+function parseSay(text){
+  var items = [], skipped = 0;
+  String(text || '').split(/[\n；;。]+/).forEach(function(seg){
+    seg = seg.trim(); if (!seg) return;
+    var dt = takeDate(seg), parts = dt.rest.split(/[，、]|,(?!\d{3})/), groups = [], pending = [];
+    parts.forEach(function(p){
+      if (findAmounts(p).length){ groups.push(pending.concat([p])); pending = []; }
+      else if (groups.length) groups[groups.length - 1].push(p);
+      else pending.push(p);
+    });
+    if (!groups.length){ skipped++; return; }
+    groups.forEach(function(g){ var it = parseOne(g.join(' '), dt.date); if (it) items.push(it); else skipped++; });
+  });
+  return { items:items, skipped:skipped };
+}
+function visionPrompt(){
+  var t = today();
+  return '这些图片是一个住在韩国的人的付款记录：可能是付款 App 截图（카카오페이、네이버페이、토스、银行 App、微信、支付宝、淘宝订单）、超市或餐厅的小票（영수증）、刷卡单。请找出图里每一笔支出。\n\n' +
+    '只回复一个 JSON 对象，不要任何别的文字。格式：\n{"items":[{"amount":12500,"currency":"KRW","merchant":"商家名","date":"' + t + '","category":"' + catNames()[0] + '","pay":"card","note":"买了什么"}],"unreadable":false}\n\n' +
+    '规则：\n' +
+    '1. amount 是实际付款金额（합계、결제금액、받을금액、实付、Total），纯数字，不带逗号和货币符号。不要取单价、小计、税额（부가세）、找零（거스름돈）、积分、优惠前的原价。\n' +
+    '2. currency：韩元（원、₩、KRW）写 "KRW"，人民币（¥、元、CNY、RMB）写 "CNY"。同一笔同时显示两种货币时（比如在韩国用微信或支付宝付款），写实际扣款的那种。\n' +
+    '3. category 只能从这些里选一个：' + catNames().join('、') + '。超市买食材选买菜那类；餐厅、外卖、咖啡、便利店买吃的选外食那类。\n' +
+    '4. pay：付款 App 或网购截图写 "online"；小票或刷卡单上有 카드、신용、체크、승인 写 "card"；有 현금 写 "cash"；看不出来写 ""。\n' +
+    '5. date 用 YYYY-MM-DD；图里没有年份就用 ' + t.slice(0, 4) + ' 年；看不出日期写 ""。今天是 ' + t + '。\n' +
+    '6. note 用中文，10 个字以内，写买了什么，比如「超市买菜」「炸鸡外卖」。merchant 保留原文商家名。\n' +
+    '7. 一张图里有多笔消费（比如账单列表）就全部列出；同一笔在几张图里重复出现只记一次。收入、退款、转给自己的钱不要。\n' +
+    '8. 看不清或者不是付款记录，回复 {"items":[],"unreadable":true}。';
+}
+function cleanItems(res){
+  var arr = Array.isArray(res) ? res : res && Array.isArray(res.items) ? res.items : [], t = today(), names = catNames();
+  return arr.map(function(x){
+    if (!isObj(x)) return null;
+    var amount = typeof x.amount === 'number' ? x.amount : (findAmounts(String(x.amount || ''))[0] || {a:0}).a;
+    if (!(amount > 0)) return null;
+    var cs = String(x.currency || '');
+    var cur = /cny|rmb|人民币|元|¥/i.test(cs) ? 'CNY' : /krw|원|₩|韩/i.test(cs) ? 'KRW' : (amount >= 300 ? 'KRW' : 'CNY');
+    var merchant = String(x.merchant || '').trim(), note = String(x.note || '').trim();
+    var cat = names.indexOf(x.category) >= 0 ? x.category : guessCat(note + ' ' + merchant);
+    var date = /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') ? x.date : t;
+    if (date > t) date = t;
+    if (merchant && note.indexOf(merchant) < 0) note = note ? note + ' · ' + merchant : merchant;
+    return { type:'out', amount: cur === 'KRW' ? Math.round(amount) : r2(amount), cur:cur, cat:cat, date:date, pay: PAY_NAME[x.pay] ? x.pay : '', note: note.slice(0, 40) };
+  }).filter(Boolean);
+}
+function shrink(file){
+  return new Promise(function(resolve){
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      try {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 2000 / Math.max(w, h)), cv = document.createElement('canvas');
+        cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        cv.toBlob(function(b){ URL.revokeObjectURL(url); resolve(b || file); }, 'image/jpeg', 0.86);
+      } catch(e){ URL.revokeObjectURL(url); resolve(file); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+function thumbsHtml(){ return Review.urls.length ? '<div class="thumbs">' + Review.urls.map(function(u){ return '<img src="' + u + '" alt="要识别的图片">'; }).join('') + '</div>' : ''; }
+var VISION_ERR = {
+  not_granted: '需要先允许这个页面用 Claude 看图。没关系，也可以「说一句」或者手动记。',
+  sampling_disabled: '这个账号现在用不了 Claude 看图，先手动记吧。',
+  rate_limited: '这会儿识别的次数用完了，过一会儿再试，或者先「说一句」记下来。',
+  image_rejected: '这张图打不开或者太大了，换一张截图试试。',
+  session_expired: '登录过期了，重新登录 claude.ai 后再试。',
+  refused: '这张图没法识别，换一张试试，或者手动记。',
+  empty_completion: '没认出来，换一张清楚点的图试试。',
+  invalid_json: '没认出来，换一张清楚点的图试试。'
+};
+async function recognize(files){
+  files = files.filter(function(f){ return /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name || ''); });
+  if (!files.length){ toast('请选一张图片'); return; }
+  if (!Vision.sample){ sheetPhotoHelp(); return; }
+  Review.urls.forEach(function(u){ URL.revokeObjectURL(u); });
+  Review.urls = files.map(function(f){ return URL.createObjectURL(f); });
+  var ctrl = new AbortController(); Vision.ctrl = ctrl;
+  openSheet(sheetHead('正在识别') + thumbsHtml() + '<div class="loading"><span class="spin" aria-hidden="true"></span><span>正在看图，找付款金额…一般要十几秒</span></div><div class="sheet-actions"><button class="btn" data-a="close">取消</button></div>');
+  try {
+    var blobs = await Promise.all(files.map(shrink)), all = [];
+    for (var i = 0; i < blobs.length; i += Vision.max){
+      var res = await Vision.sample.json(visionPrompt(), { images: blobs.slice(i, i + Vision.max), modelTier:'default', signal: ctrl.signal });
+      all = all.concat(cleanItems(res));
+    }
+    if (Vision.ctrl !== ctrl) return;
+    Vision.ctrl = null;
+    if (all.length) sheetReview(all, '认出 ' + all.length + ' 笔，核对一下');
+    else visionFail('图里没找到付款金额。换一张清楚点的截图，或者直接说一句。');
+  } catch(e){
+    if (Vision.ctrl !== ctrl || (e && e.code === 'cancelled')) return;
+    Vision.ctrl = null;
+    if (e && e.code === 'images_unavailable'){ Vision.sample = null; sheetPhotoHelp(); render(); return; }
+    visionFail((e && VISION_ERR[e.code]) || '识别失败了，过一会儿再试，或者先手动记。');
+  }
+}
+function visionFail(msg){
+  openSheet(sheetHead('没识别出来') + thumbsHtml() + '<p class="lead">' + esc(msg) + '</p><div class="sheet-actions">' + photoBtn('btn') + '<button class="btn primary" data-a="go" data-tab="ledger">去手动记</button></div>');
+}
+function sheetPhotoHelp(){
+  openSheet(sheetHead('截图 / 小票识别') +
+    '<p class="lead">' + (window.claude && typeof window.claude.use === 'function' ? '这里现在不能直接看图，可以借 Claude App 认一下：' : '桌面版不接 AI，所以免费。识别图片要借一下 Claude App：') + '</p>' +
+    '<ol class="steps help"><li><span>点「复制提示词」</span></li><li><span>打开 Claude App，粘贴提示词，再附上付款截图或小票照片，发送</span></li><li><span>把 Claude 的回复整段复制，粘贴到下面</span></li></ol>' +
+    '<div class="row" style="margin:14px 0"><button class="btn primary" data-a="copy-prompt">' + ic('copy') + '复制提示词</button></div>' +
+    '<form class="form" data-f="ai-reply" autocomplete="off"><textarea name="reply" aria-label="Claude 的回复" placeholder="把 Claude 的回复粘贴到这里"></textarea><button class="btn soft" type="submit">读取并核对</button></form>' +
+    '<p class="hint" style="margin-top:12px">现金付的，或者只想快点记：在账本里「说一句」，比如「现金 1.2万韩元 买菜」。</p>');
+}
+function sheetReview(items, title){
+  Review.items = items;
+  var cats = catNames();
+  var html = sheetHead(esc(title)) + thumbsHtml() + '<form class="form" data-f="review" autocomplete="off"><div class="rv-list">' + items.map(function(x, i){
+    var dup = S.ledger.some(function(r){ return r.amount === x.amount && r.cur === x.cur && r.date === x.date && r.type === x.type; });
+    var cv = x.type === 'in' ? '__in' : x.type === 'save' ? '__save' : x.cat;
+    return '<div class="rv' + (dup ? ' dup' : '') + '"><div class="between"><label class="check-row"><input type="checkbox" name="on-' + i + '"' + (dup ? '' : ' checked') + '><b>第 ' + (i + 1) + ' 笔</b></label>' + (dup ? '<span class="tag warn">这笔好像记过了</span>' : '') + '</div>' +
+      '<div class="rv-amt"><input type="text" inputmode="decimal" name="amt-' + i + '" value="' + x.amount + '" aria-label="金额"><select name="cur-' + i + '" aria-label="币种">' + curOpts(x.cur) + '</select></div>' +
+      '<div class="grid2"><select name="cat-' + i + '" aria-label="类别">' + cats.map(function(n){ return '<option value="' + esc(n) + '"' + (cv === n ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') +
+        '<option value="__in"' + (cv === '__in' ? ' selected' : '') + '>收入</option><option value="__save"' + (cv === '__save' ? ' selected' : '') + '>存钱</option></select>' +
+        '<input type="date" name="date-' + i + '" value="' + x.date + '" aria-label="日期"></div>' +
+      '<div class="grid2"><input type="text" name="note-' + i + '" value="' + esc(x.note) + '" placeholder="备注" aria-label="备注"><select name="pay-' + i + '" aria-label="付款方式">' + PAYS.map(function(o){ return '<option value="' + o[0] + '"' + (x.pay === o[0] ? ' selected' : '') + '>' + (o[0] ? o[1] : '付款方式') + '</option>'; }).join('') + '</select></div></div>';
+  }).join('') + '</div><div class="sheet-actions"><button class="btn primary" type="submit">' + ic('check') + '记下来</button></div></form>';
+  openSheet(html);
 }
 
 /* ---------------- toast ---------------- */
@@ -1255,6 +1566,21 @@ var A = {
   month: function(el){ var d = +el.dataset.d; view.month = addMonths(view.month, d); render(); },
   'lg-del': function(el){ arm(el, function(){ S.ledger = S.ledger.filter(function(r){ return r.id !== el.dataset.id; }); commit('ledger'); toast('删掉了'); }); },
   budget: sheetBudget,
+  rate: sheetRate,
+  'show-cur': function(el){ S.settings.showCur = el.dataset.c; commit('settings'); },
+  'rate-fetch': async function(el){
+    el.disabled = true; el.textContent = '正在查…';
+    try {
+      var res = await fetch('https://open.er-api.com/v6/latest/CNY'), j = await res.json(), k = j && j.rates && j.rates.KRW;
+      if (!(k > 0)) throw new Error('no rate');
+      $('#rate-in').value = fmtRate(k); $('#rate-eg').textContent = rateEg(k);
+      $('#rate-hint').textContent = '查到的是 ' + (j.time_last_update_utc ? new Date(j.time_last_update_utc).toLocaleDateString('zh-CN') : '今天') + ' 的参考汇率（来自 open.er-api.com），点保存生效。';
+    } catch(e){ var h = $('#rate-hint'); if (h) h.textContent = '没查到，可能没联网。手动填一个数字也可以。'; }
+    if (document.contains(el)){ el.disabled = false; el.innerHTML = ic('refresh') + '联网查今天的汇率'; }
+  },
+  'photo-help': sheetPhotoHelp,
+  'say-focus': function(){ var el = $('#say-in'); if (!el) return; el.scrollIntoView({block:'center'}); el.focus({preventScroll:true}); },
+  'copy-prompt': function(){ copyText(visionPrompt(), '提示词已复制，去 Claude App 粘贴，再附上截图'); },
   'bd-add': function(){ $('#bd-rows').insertAdjacentHTML('beforeend', budgetRow('', 0)); var ins = $$('#bd-rows input[name=cn]'); ins[ins.length-1].focus(); budgetSum(); },
   'bd-del': function(el){ el.closest('.bd-row').remove(); budgetSum(); },
   // fridge
@@ -1350,16 +1676,52 @@ var A = {
 
 var F = {
   ledger: function(f){
-    var fd = new FormData(f), type = fd.get('type') || 'out', amount = r2(num(fd.get('amount')));
+    var fd = new FormData(f), type = fd.get('type') || 'out', cur = fd.get('cur') === 'CNY' ? 'CNY' : 'KRW', amount = amountOf(fd.get('amount'), cur);
     if (!(amount > 0)){ toast('金额要大于 0'); $('#lg-amount').focus(); return; }
     var cat = type === 'out' ? (fd.get('cat') || '其他') : type === 'in' ? '收入' : '储蓄';
     var date = fd.get('date') || today();
-    S.ledger.push({id:uid(), date:date, type:type, cat:cat, amount:amount, note:String(fd.get('note') || '').trim()});
-    view.lgType = type; if (type === 'out') view.lgCat = cat;
+    S.ledger.push({id:uid(), date:date, type:type, cat:cat, amount:amount, cur:cur, pay: fd.get('pay') || '', note:String(fd.get('note') || '').trim()});
+    view.lgType = type; view.lgCur = cur; if (type === 'out') view.lgCat = cat;
     view.month = monthOf(date);
     commit('ledger');
-    toast('记好了：' + (type === 'out' ? cat : type === 'in' ? '收入' : '存钱') + ' ' + money(amount));
+    toast('记好了：' + (type === 'out' ? cat : type === 'in' ? '收入' : '存钱') + ' ' + fmtC(amount, cur));
     var a = $('#lg-amount'); if (a) a.focus({preventScroll:true});
+  },
+  say: function(f){
+    var r = parseSay(new FormData(f).get('say'));
+    if (!r.items.length){ toast('没找到金额，写成「现金 12000韩元 买菜」这样试试'); return; }
+    Review.urls = [];
+    sheetReview(r.items, '认出 ' + r.items.length + ' 笔' + (r.skipped ? '（有 ' + r.skipped + ' 句没找到金额）' : '') + '，核对一下');
+  },
+  'ai-reply': function(f){
+    var txt = String(new FormData(f).get('reply') || ''), i = txt.indexOf('{'), j = txt.lastIndexOf('}'), data = null;
+    if (i >= 0 && j > i){ try { data = JSON.parse(txt.slice(i, j + 1)); } catch(e){} }
+    if (!data){ toast('没读出来，确认把 Claude 的回复整段复制过来了'); return; }
+    var items = cleanItems(data);
+    if (!items.length){ toast(data.unreadable ? 'Claude 说这张图看不清，换一张试试' : '回复里没有付款金额'); return; }
+    sheetReview(items, '认出 ' + items.length + ' 笔，核对一下');
+  },
+  review: function(f){
+    var fd = new FormData(f), added = [], sums = {KRW:0, CNY:0};
+    Review.items.forEach(function(x, i){
+      if (!fd.get('on-' + i)) return;
+      var cur = fd.get('cur-' + i) === 'CNY' ? 'CNY' : 'KRW', amount = amountOf(fd.get('amt-' + i), cur);
+      if (!(amount > 0)) return;
+      var cv = String(fd.get('cat-' + i) || ''), type = cv === '__in' ? 'in' : cv === '__save' ? 'save' : 'out';
+      var rec = {id:uid(), date: fd.get('date-' + i) || today(), type:type, cat: type === 'out' ? (cv || '其他') : type === 'in' ? '收入' : '储蓄', amount:amount, cur:cur, pay: fd.get('pay-' + i) || '', note:String(fd.get('note-' + i) || '').trim()};
+      S.ledger.push(rec); added.push(rec); sums[cur] += amount;
+    });
+    if (!added.length){ toast('没有勾选要记的'); return; }
+    view.month = monthOf(added[0].date);
+    closeSheet(); commit('ledger');
+    if (view.tab === 'ledger'){ var say = $('#say-in'); if (say) say.value = ''; }
+    toast('记好了 ' + added.length + ' 笔：' + splitText(sums));
+  },
+  rate: function(f){
+    var r = num(new FormData(f).get('rate'));
+    if (!(r >= 50 && r <= 1000)){ toast('汇率看起来不对，1 人民币一般是一两百韩元'); return; }
+    S.settings.rate = r2(r); S.settings.rateAt = today();
+    closeSheet(); commit('settings'); toast('汇率改好了：' + rateText());
   },
   food: function(f){
     var fd = new FormData(f), name = String(fd.get('name')).trim();
@@ -1373,7 +1735,7 @@ var F = {
   budget: function(f){
     var rows = $$('.bd-row', f).map(function(r){ return {n:$('input[name=cn]', r).value.trim(), b:r2(num($('input[name=cb]', r).value))}; }).filter(function(c){ return c.n; });
     if (!rows.length){ toast('至少留一个类别'); return; }
-    S.settings.cats = rows; S.settings.saveGoal = r2(num(new FormData(f).get('saveGoal')));
+    S.settings.cats = rows; S.settings.saveGoal = r2(num(new FormData(f).get('saveGoal'))); S.settings.budgetCur = new FormData(f).get('bcur') === 'CNY' ? 'CNY' : 'KRW';
     if (view.lgCat && !rows.some(function(c){ return c.n === view.lgCat; })) view.lgCat = null;
     closeSheet(); commit('settings'); toast('预算改好了');
   },
@@ -1400,11 +1762,11 @@ var F = {
       else S.fridge.push({id:uid(), name:x.n, emoji:c ? c[0] : '🍽️', qty:qty, unit:unit || (c ? c[1] : '份'), expire:fd.get('exp-' + x.id) || addDays(t, 7), place:c ? c[3] : '冷藏', added:t});
       moved.push(x.n);
     });
-    var amount = r2(num(fd.get('amount')));
-    if (amount > 0) S.ledger.push({id:uid(), date:t, type:'out', cat:String(fd.get('cat') || '买菜做饭'), amount:amount, note:'采购：' + S.shop.filter(function(x){ return x.done; }).map(function(x){ return x.n; }).slice(0,6).join(' ')});
+    var bcur = fd.get('cur') === 'CNY' ? 'CNY' : 'KRW', amount = amountOf(fd.get('amount'), bcur);
+    if (amount > 0) S.ledger.push({id:uid(), date:t, type:'out', cat:String(fd.get('cat') || '买菜做饭'), amount:amount, cur:bcur, pay:'', note:'采购：' + S.shop.filter(function(x){ return x.done; }).map(function(x){ return x.n; }).slice(0,6).join(' ')});
     S.shop = S.shop.filter(function(x){ return !x.done; });
     closeSheet(); commit('shop','fridge','ledger');
-    toast((moved.length ? moved.length + ' 样收进冰箱' : '清单整理好了') + (amount > 0 ? '，记账 ' + money(amount) : ''));
+    toast((moved.length ? moved.length + ' 样收进冰箱' : '清单整理好了') + (amount > 0 ? '，记账 ' + fmtC(amount, bcur) : ''));
   },
   'todo-add': function(f){
     var fd = new FormData(f), txt = String(fd.get('t') || '').trim(); if (!txt) return;
@@ -1436,7 +1798,8 @@ document.addEventListener('click', function(e){
 });
 document.addEventListener('keydown', function(e){
   if (e.key === 'Escape' && !$('#sheet').hidden){ closeSheet(); return; }
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-a]')){ e.preventDefault(); e.target.click(); }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id === 'say-in'){ e.preventDefault(); e.target.form.requestSubmit(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-a], label[for=photo-in]')){ e.preventDefault(); e.target.click(); }
 });
 document.addEventListener('submit', function(e){
   var f = e.target.closest('form[data-f]'); if (!f) return;
@@ -1455,11 +1818,21 @@ document.addEventListener('input', function(e){
 });
 document.addEventListener('change', function(e){
   var el = e.target;
+  if (el.id === 'photo-in'){ var files = Array.prototype.slice.call(el.files || []); el.value = ''; if (files.length) recognize(files); return; }
+  if (el.name === 'bcur'){
+    var form = el.closest('form'), from = form.dataset.cur, to = el.value;
+    if (from && from !== to){
+      $$('input[name=cb]', form).concat($$('input[name=saveGoal]', form)).forEach(function(i){ i.value = roundCur(conv(num(i.value), from, to), to); });
+      form.dataset.cur = to; budgetSum();
+    }
+    return;
+  }
   if (el.name === 'type' && el.closest('form[data-f=ledger]')){
     view.lgType = el.value;
     $('#lg-cats').hidden = el.value !== 'out';
     $('#lg-note').placeholder = el.value === 'in' ? '比如：工资' : el.value === 'save' ? '比如：转入存款' : '比如：超市买菜';
   }
+  if (el.name === 'cur' && el.closest('form[data-f=ledger]')) view.lgCur = el.value;
   if (el.name === 'cat' && el.closest('form[data-f=ledger]')) view.lgCat = el.value;
 });
 window.addEventListener('hashchange', function(){ var h = location.hash.slice(1); if (h && h !== view.tab) setTab(h); });
@@ -1473,6 +1846,7 @@ var h0 = location.hash.slice(1);
 if (TABS.some(function(t){ return t[0] === h0; })) view.tab = h0;
 render();
 initCloud();
+initVision();
 })();
 </script>
 <!-- /app:body -->
