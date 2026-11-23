@@ -41,12 +41,11 @@
 - `manifest.json`、`sw.js`：让它能「添加到主屏幕」，没网也能打开
 - `icon-*.png`：桌面图标
 
-## 放到网上（GitHub Pages）
-1. 打开这个仓库的 **Settings → Pages**
-2. Source 选 **Deploy from a branch**，Branch 选放着这些文件的分支，文件夹选 **/(root)**，点 **Save**
-3. 等 1–2 分钟，页面上会显示网址，类似 `https://你的用户名.github.io/仓库名/`
+## 网址
 
-注意：免费账号的私有仓库不能开 Pages，需要把仓库设成 Public。
+**https://yuxian695-alt.github.io/diet/life/**
+
+放在饮食助手同一个网站下面（`diet` 仓库的 `life` 文件夹），不用另外开 GitHub Pages。改了这里的 `index.html` 之后，要同步复制到 `diet/life/` 才会上线。
 
 ## 装到 iPhone 桌面
 1. 用 **Safari** 打开上面的网址
@@ -61,7 +60,7 @@
 1. **截取屏幕快照**
 2. **从图像中提取文本**
 3. **URL 编码**
-4. **打开 URL**：输入框里先粘贴 `https://yuxian695-alt.github.io/-/#shot=`，紧跟着插入变量「URL 编码后的文本」
+4. **打开 URL**：输入框里先粘贴 `https://yuxian695-alt.github.io/diet/life/#shot=`，紧跟着插入变量「URL 编码后的文本」
 
 起名「记一笔」，点完成。然后 **设置 → 辅助功能 → 触控 → 轻点背面 → 轻点两下**，选「记一笔」。第一次运行时允许它打开网址。
 
