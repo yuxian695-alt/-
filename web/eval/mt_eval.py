@@ -17,14 +17,25 @@ SYSTEM = ("你是大学课堂的韩语→简体中文同声传译。把老师说
           "只输出译文，不要解释，不要加引号或拼音。")
 
 
-def run_llm(name, thinking_flag=False, dtype=torch.float32):
+SHOTS = [
+    ("자, 그럼 출석 부르고 시작하겠습니다.", "好，那我先点名，然后开始上课。"),
+    ("가격탄력성이 1보다 크면 탄력적이라고 합니다", "价格弹性大于1时，就叫作富有弹性。"),
+    ("이거 시험에 나오니까 잘 적어 두세요", "这个考试会考，大家好好记下来。"),
+]
+
+
+def run_llm(name, thinking_flag=False, dtype=torch.float32, shots=False):
     from transformers import AutoTokenizer, AutoModelForCausalLM
     tok = AutoTokenizer.from_pretrained(name)
     model = AutoModelForCausalLM.from_pretrained(name, dtype=dtype)
     model.eval()
     outs, times = [], []
     for s in src:
-        msgs = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": s}]
+        msgs = [{"role": "system", "content": SYSTEM}]
+        if shots:
+            for k, z in SHOTS:
+                msgs += [{"role": "user", "content": k}, {"role": "assistant", "content": z}]
+        msgs.append({"role": "user", "content": s})
         kw = {"enable_thinking": False} if thinking_flag else {}
         prompt = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, **kw)
         ids = tok(prompt, return_tensors="pt")
@@ -83,6 +94,11 @@ CANDIDATES = {
     "Qwen3.5-2B": lambda: run_llm("Qwen/Qwen3.5-2B", True),
     "Qwen3-4B": lambda: run_llm("Qwen/Qwen3-4B", True, torch.bfloat16),
     "Qwen3.5-4B": lambda: run_llm("Qwen/Qwen3.5-4B", True, torch.bfloat16),
+    # 加 3 个例句（多轮对话形式）
+    "Qwen3.5-2B+例句": lambda: run_llm("Qwen/Qwen3.5-2B", True, shots=True),
+    "Qwen3-1.7B+例句": lambda: run_llm("Qwen/Qwen3-1.7B", True, shots=True),
+    "Qwen2.5-1.5B+例句": lambda: run_llm("Qwen/Qwen2.5-1.5B-Instruct", shots=True),
+    "Qwen3-4B+例句": lambda: run_llm("Qwen/Qwen3-4B", True, torch.bfloat16, shots=True),
 }
 
 only = [a for arg in sys.argv[1:] for a in arg.split(",") if a.strip()] or list(CANDIDATES)
