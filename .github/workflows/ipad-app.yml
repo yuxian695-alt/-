@@ -3,6 +3,7 @@ name: iPad App 检查
 on:
   push:
     branches: [ipad-interpreter]
+    paths-ignore: ['web/**', '.github/workflows/web-app.yml']
   workflow_dispatch:
 
 defaults:

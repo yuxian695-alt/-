@@ -1,0 +1,30 @@
+name: 网页版检查
+
+on:
+  push:
+    branches: [ipad-interpreter]
+    paths: ['web/**', '.github/workflows/web-app.yml']
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  mt-eval:
+    name: 翻译模型准确度对比（韩→中）
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 装依赖
+        run: |
+          pip install -q torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -q "transformers>=4.51" sentencepiece sacrebleu sacremoses protobuf accelerate
+      - name: 跑对比
+        run: |
+          python web/eval/mt_eval.py
+          cat web/eval/mt-report.md >> "$GITHUB_STEP_SUMMARY"
