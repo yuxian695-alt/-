@@ -1,10 +1,11 @@
 import AVFoundation
 
 enum CaptureError: LocalizedError {
-    case noPermission, noInput, converter
+    case noPermission, noUsageText, noInput, converter
     var errorDescription: String? {
         switch self {
         case .noPermission: return "没有麦克风权限。请到 设置 → 隐私与安全性 → 麦克风，打开“课堂同传”。"
+        case .noUsageText: return "这份工程缺少麦克风权限说明，系统不允许录音。请重新下载最新版本再运行。"
         case .noInput: return "找不到麦克风。请拔掉外接设备后再试。"
         case .converter: return "声音格式转换失败。"
         }
@@ -82,8 +83,12 @@ final class AudioCapture {
     /// 已经采集（不含暂停）的秒数，线程安全
     var elapsed: Double { lock.lock(); defer { lock.unlock() }; return seconds }
 
-    static func requestPermission() async -> Bool {
-        await AVAudioApplication.requestRecordPermission()
+    /// 缺少麦克风权限说明时系统会直接让 App 崩溃，所以先检查，缺了就报错而不是去申请。
+    static func requestPermission() async throws -> Bool {
+        guard Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") != nil else {
+            throw CaptureError.noUsageText
+        }
+        return await AVAudioApplication.requestRecordPermission()
     }
 
     private static let fileSettings: [String: Any] = [

@@ -29,10 +29,28 @@ xcrun simctl bootstatus "$udid" -b
 xcrun simctl ui "$udid" appearance dark || true
 xcrun simctl status_bar "$udid" override --time "10:41" --batteryState charged --batteryLevel 100 --wifiBars 3 || true
 xcrun simctl install "$udid" "$app"
+bid=app.xiaobawang.classinterpreter
+
+# 先按平时的方式（不带示例数据）打开，确认首页检查跑完以后 App 还活着
+xcrun simctl launch "$udid" "$bid"
+sleep 20
+if xcrun simctl spawn "$udid" launchctl list | grep -q "$bid"; then echo "正常启动：20 秒后仍在运行"; else echo "正常启动：App 已退出"; fi
+xcrun simctl io "$udid" screenshot "$out/normal.png"
+ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | grep -i classinterpreter | head -3 | while read -r f; do
+  echo "== 崩溃报告 $f"; head -80 ~/Library/Logs/DiagnosticReports/"$f"
+done
+
 for screen in home live detail; do
-  xcrun simctl terminate "$udid" app.xiaobawang.classinterpreter >/dev/null 2>&1 || true
-  xcrun simctl launch "$udid" app.xiaobawang.classinterpreter -demo "$screen"
+  xcrun simctl terminate "$udid" "$bid" >/dev/null 2>&1 || true
+  xcrun simctl launch "$udid" "$bid" -demo "$screen"
   sleep 12
   xcrun simctl io "$udid" screenshot "$out/$screen.png"
 done
 ls -la "$out"
+
+# 截图也打进日志（压成 JPEG 的 base64），方便不能下载附件时取图
+for f in "$out"/*.png; do
+  n=$(basename "$f" .png)
+  sips -s format jpeg -s formatOptions 80 -Z 1600 "$f" --out "/tmp/$n.jpg" >/dev/null
+  echo "=====BEGIN $n.jpg"; base64 -i "/tmp/$n.jpg" | fold -w 76; echo "=====END $n.jpg"
+done

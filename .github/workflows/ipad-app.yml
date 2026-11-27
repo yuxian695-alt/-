@@ -32,6 +32,13 @@ jobs:
       - name: 整个 App 按 iPadOS 编译
         run: ci/typecheck-app.sh
 
+      - name: Swift Playgrounds 工程支持哪些权限写法
+        continue-on-error: true
+        run: |
+          find "$(xcode-select -p)/.." -iname "*AppleProductTypes*" 2>/dev/null | head -20
+          f=$(find "$(xcode-select -p)/.." -iname "AppleProductTypes*.swiftinterface" 2>/dev/null | head -1)
+          [ -n "$f" ] && grep -n -E "static func|static var|case |additionalInfoPlist" "$f" | head -150 || true
+
       - name: 原样编译 Swift Playgrounds 工程
         continue-on-error: true
         working-directory: ClassInterpreter.swiftpm

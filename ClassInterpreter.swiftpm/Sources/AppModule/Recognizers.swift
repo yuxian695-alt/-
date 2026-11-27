@@ -35,7 +35,9 @@ protocol LiveRecognizer: AnyObject {
 }
 
 enum SpeechPermission {
+    /// 缺少语音识别权限说明时，申请权限会让 App 直接崩溃；这时返回 false，只用不需要这项权限的新版引擎。
     static func request() async -> Bool {
+        guard Bundle.main.object(forInfoDictionaryKey: "NSSpeechRecognitionUsageDescription") != nil else { return false }
         let status = await withCheckedContinuation { (c: CheckedContinuation<SFSpeechRecognizerAuthorizationStatus, Never>) in
             SFSpeechRecognizer.requestAuthorization { c.resume(returning: $0) }
         }

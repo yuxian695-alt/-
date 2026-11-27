@@ -73,7 +73,7 @@ final class LiveController: ObservableObject {
         fellBack = false
         status = "正在打开麦克风…"
         do {
-            guard await AudioCapture.requestPermission() else { throw CaptureError.noPermission }
+            guard try await AudioCapture.requestPermission() else { throw CaptureError.noPermission }
             status = "正在准备语音识别…"
             let speechOK = await SpeechPermission.request()
             terms = store.terms(for: course)

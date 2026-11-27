@@ -67,7 +67,9 @@ final class Store: ObservableObject {
     private var coursesURL: URL { root.appendingPathComponent("courses.json") }
 
     init() {
-        root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        // 不放 Documents：Swift Playgrounds 运行 App 前要往 Documents 里写自己的文件，两边别抢同一个文件夹
+        root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("课堂同传", isDirectory: true)
         for d in [sessionsDir, audioDir, exportDir] {
             try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         }
