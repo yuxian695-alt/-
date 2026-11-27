@@ -5,6 +5,11 @@ on:
     branches: [ipad-interpreter]
     paths: ['web/**', '.github/workflows/web-app.yml']
   workflow_dispatch:
+    inputs:
+      models:
+        description: '要比的模型（JSON 数组，留空 = 全部）'
+        required: false
+        default: ''
 
 defaults:
   run:
@@ -12,9 +17,13 @@ defaults:
 
 jobs:
   mt-eval:
-    name: 翻译模型准确度对比（韩→中）
+    name: 翻译准确度 ${{ matrix.model }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ${{ fromJSON(inputs.models != '' && inputs.models || '["opus-mt 韩→英→中","NLLB-200 600M","Qwen2.5-0.5B","Qwen3-0.6B","Qwen2.5-1.5B","Qwen3-1.7B","Qwen2.5-3B","Qwen3.5-0.8B","Qwen3.5-2B","Qwen3-4B","Qwen3.5-4B"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,8 +32,8 @@ jobs:
       - name: 装依赖
         run: |
           pip install -q torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -q "transformers>=4.51" sentencepiece sacrebleu sacremoses protobuf accelerate
+          pip install -q "transformers>=5.2" sentencepiece sacrebleu sacremoses protobuf accelerate
       - name: 跑对比
         run: |
-          python web/eval/mt_eval.py
+          python web/eval/mt_eval.py "${{ matrix.model }}"
           cat web/eval/mt-report.md >> "$GITHUB_STEP_SUMMARY"

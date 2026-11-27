@@ -17,10 +17,10 @@ SYSTEM = ("你是大学课堂的韩语→简体中文同声传译。把老师说
           "只输出译文，不要解释，不要加引号或拼音。")
 
 
-def run_llm(name, thinking_flag=False):
+def run_llm(name, thinking_flag=False, dtype=torch.float32):
     from transformers import AutoTokenizer, AutoModelForCausalLM
     tok = AutoTokenizer.from_pretrained(name)
-    model = AutoModelForCausalLM.from_pretrained(name, torch_dtype=torch.float32)
+    model = AutoModelForCausalLM.from_pretrained(name, dtype=dtype)
     model.eval()
     outs, times = [], []
     for s in src:
@@ -79,9 +79,13 @@ CANDIDATES = {
     "Qwen2.5-1.5B": lambda: run_llm("Qwen/Qwen2.5-1.5B-Instruct"),
     "Qwen3-1.7B": lambda: run_llm("Qwen/Qwen3-1.7B", True),
     "Qwen2.5-3B": lambda: run_llm("Qwen/Qwen2.5-3B-Instruct"),
+    "Qwen3.5-0.8B": lambda: run_llm("Qwen/Qwen3.5-0.8B", True),
+    "Qwen3.5-2B": lambda: run_llm("Qwen/Qwen3.5-2B", True),
+    "Qwen3-4B": lambda: run_llm("Qwen/Qwen3-4B", True, torch.bfloat16),
+    "Qwen3.5-4B": lambda: run_llm("Qwen/Qwen3.5-4B", True, torch.bfloat16),
 }
 
-only = sys.argv[1:] or list(CANDIDATES)
+only = [a for arg in sys.argv[1:] for a in arg.split(",") if a.strip()] or list(CANDIDATES)
 chrf = CHRF()
 results = {}
 for name in only:
@@ -105,5 +109,8 @@ for i, s in enumerate(src):
         lines.append(f"- {n}：{r['outs'][i]}")
     lines.append("")
 report = "\n".join(lines)
+# 机器读的结果（每个模型一行），方便把几台电脑分别跑的结果合在一起
+for n, r in results.items():
+    print("RESULT_JSON " + json.dumps({"name": n, "chrf": r["chrf"], "sec": r["sec"], "outs": r["outs"]}, ensure_ascii=False), flush=True)
 open(os.path.join(here, "mt-report.md"), "w", encoding="utf-8").write(report)
 print(report)
