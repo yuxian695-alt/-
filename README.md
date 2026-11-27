@@ -11,8 +11,8 @@
 ## 装到 iPad 上（不需要 Mac，也不需要付费开发者账号）
 
 1. 在 iPad 的 App Store 安装苹果免费的 **Swift Playgrounds**。
-2. 把 `课堂同传.swiftpm.zip` 传到 iPad 上，比如放进 iCloud 云盘，或者用微信、邮件发给自己再存到“文件”。
-3. 在 iPad 的“文件”App 里点一下 zip，它会解压出 `ClassInterpreter.swiftpm`。点它，Swift Playgrounds 会自动打开。
+2. 用 iPad 的 Safari 打开 <https://github.com/yuxian695-alt/-/archive/refs/heads/ipad-interpreter.zip> 下载这个分支（或者把电脑上的 `课堂同传.swiftpm.zip` 用微信、邮件发到 iPad，存到“文件”）。
+3. 在 iPad 的“文件”App 里点一下 zip 解压，再点里面的 `ClassInterpreter.swiftpm`，Swift Playgrounds 会自动打开。
 4. 点右上角的 ▶︎ 运行。第一次运行时，在弹窗里允许 **麦克风** 和 **语音识别**。
 5. 在首页“上课前检查”里，把“语音识别”和“翻译”两项都点“下载”。翻译会弹出系统下载窗口，点“下载”就行。三项都显示绿色勾以后，就可以完全离线使用。
 
@@ -50,6 +50,16 @@
 | 概括 | Foundation Models（Apple 智能本机模型） | 不可用 |
 
 录音是 16 kHz 单声道 AAC，每 5 分钟存一段。就算 App 中途被关掉，也最多丢最后几分钟；下课后会自动合并成一个文件。
+
+## 实测（GitHub 的 Mac，合成韩语讲课，按真实速度播放）
+
+| 指标 | 结果 |
+|---|---|
+| 老师说完一句 → 屏幕上“正在说”跟上 | 中位数 0.15 秒，最慢 0.45 秒 |
+| 老师说完一句 → 这句定下来去翻译 | 中位数 1.40 秒，最慢 1.54 秒（只等引擎自己定稿要 14～30 秒） |
+| 识别错字率（按字） | 4.3% |
+
+GitHub 的虚拟机不支持新版 SpeechTranscriber，只能测上一代 DictationTranscriber。iPad 上用的是新版。苹果翻译在虚拟机上装不了语言包，所以没测；App 上课时会在顶部显示每句话的实测延迟。
 
 ## 准确度说明
 
