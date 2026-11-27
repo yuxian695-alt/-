@@ -13,6 +13,7 @@ struct ClassInterpreterApp: App {
         _store = StateObject(wrappedValue: store)
         _translator = StateObject(wrappedValue: translator)
         _live = StateObject(wrappedValue: LiveController(store: store, translator: translator))
+        if Demo.screen != nil { Demo.seed(store) }
     }
 
     var body: some Scene {
@@ -47,7 +48,14 @@ struct RootView: View {
             .translationTask(translator.config) { session in
                 await translator.serve(session)
             }
-            .task { await store.repairAudio() }
+            .task {
+                if Demo.screen == "live" {
+                    live.showDemo(Demo.liveSession(), source: "다음 주까지 교재 3장을 읽어 오시고",
+                                  target: "下周之前请读完教材第三章，", elapsed: 754)
+                    return
+                }
+                if Demo.screen == nil { await store.repairAudio() }
+            }
     }
 }
 

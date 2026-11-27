@@ -41,6 +41,10 @@ struct HomeView: View {
             .sheet(isPresented: $showCourses) { CoursesView() }
         }
         .task(id: pairID) { await readiness.refresh(pair, translator: translator) }
+        .onAppear {
+            if Demo.screen != nil { course = "经济学原理" }
+            if Demo.screen == "detail" { path = [Demo.sessionID] }
+        }
         .onChange(of: translator.state) { _, _ in
             Task { await readiness.refresh(pair, translator: translator) }
         }

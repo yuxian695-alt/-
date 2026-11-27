@@ -1,0 +1,28 @@
+# 只给截图用：把 iPad App 的源码包成一个普通 Xcode 工程，装进 iPad 模拟器。
+name: ClassInterpreterDemo
+options:
+  bundleIdPrefix: app.xiaobawang
+  deploymentTarget:
+    iOS: "18.0"
+targets:
+  ClassInterpreter:
+    type: application
+    platform: iOS
+    sources:
+      - path: ../ClassInterpreter.swiftpm/Sources/AppModule
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.xiaobawang.classinterpreter
+        PRODUCT_NAME: ClassInterpreter
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: 课堂同传
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: 上课时听老师讲话，在 iPad 本机实时识别并翻译。
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 在 iPad 本机把老师说的话变成文字。
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGN_IDENTITY: ""

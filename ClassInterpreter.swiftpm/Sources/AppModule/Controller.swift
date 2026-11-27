@@ -323,6 +323,18 @@ final class LiveController: ObservableObject {
         }
     }
 
+    /// 截图用的示例模式（见 Demo.swift）：不开麦克风，只把示例字幕摆出来
+    func showDemo(_ s: ClassSession, source: String, target: String, elapsed: Double) {
+        current = s
+        phase = .running
+        presented = true
+        now.source = source
+        now.target = target
+        now.elapsed = elapsed
+        now.level = 0.35
+        now.gainDb = 18
+    }
+
     // MARK: 上课中的操作
 
     func togglePause() {

@@ -4,3 +4,6 @@
 DerivedData/
 .DS_Store
 Bench/bench-report.md
+ci/dd/
+ci/*.xcodeproj/
+shots/
