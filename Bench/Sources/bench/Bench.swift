@@ -150,10 +150,19 @@ struct Bench {
 
         // 引擎自己定稿
         let enginePieces = finals.map { (text: $0.text, at: $0.arrival) }
-        // App 的做法：讲到句尾、1 秒没变就先切出来
+        // App 的做法：讲到句尾、1 秒没变就先切出来；停顿 1.3 秒也先定下来
         var sc = SoftCommitter()
         var appPieces: [(text: String, at: Double)] = []
+        var clockAt = 0.0
+        func tick(until t: Double) {
+            // App 每 0.2 秒检查一次“老师是不是停下来了”
+            while clockAt + 0.2 <= t {
+                clockAt += 0.2
+                if let piece = sc.idle(at: clockAt) { appPieces.append((piece, clockAt)) }
+            }
+        }
         for e in events {
+            tick(until: e.arrival)
             let text = TextTools.clean(e.text)
             if e.isFinal {
                 let rest = sc.final(text)
@@ -170,23 +179,28 @@ struct Bench {
             else { visible.append((done + TextTools.letterCount(e.text), e.arrival)) }
         }
 
+        // 用编辑距离把讲稿和识别结果逐字对齐，找到每句话最后一个字在识别结果里是第几个字
+        let refChars = normalize(refs.joined(separator: " "))
         let refCum = cumulative(refs)
-        let recognized = max(1, finals.reduce(0) { $0 + TextTools.letterCount($1.text) })
-        let scale = Double(recognized) / Double(max(1, refCum.last ?? 1))
-        func when(_ cum: [Int], _ times: [Double], _ k: Int) -> Double? {
-            let need = Double(refCum[k]) * scale - 2
-            guard let j = cum.firstIndex(where: { Double($0) >= need }) else { return nil }
+        func lastLetter(_ pieces: [String]) -> [Int] {
+            let map = align(refChars, normalize(pieces.joined(separator: " ")))
+            return refs.indices.map { k in refCum[k] > 0 && !map.isEmpty ? map[refCum[k] - 1] + 1 : 0 }
+        }
+        func when(_ need: [Int], _ cum: [Int], _ times: [Double], _ k: Int) -> Double? {
+            guard need[k] > 0, let j = cum.firstIndex(where: { $0 >= need[k] }) else { return nil }
             return times[j] - bounds[k].end
         }
-        let live = refs.indices.map { when(visible.map(\.letters), visible.map(\.at), $0) }
-        let app = refs.indices.map { when(cumulative(appPieces.map(\.text)), appPieces.map(\.at), $0) }
-        let eng = refs.indices.map { when(cumulative(enginePieces.map(\.text)), enginePieces.map(\.at), $0) }
+        let needFinal = lastLetter(finals.map(\.text))
+        let needApp = lastLetter(appPieces.map(\.text))
+        let live = refs.indices.map { when(needFinal, visible.map(\.letters), visible.map(\.at), $0) }
+        let app = refs.indices.map { when(needApp, cumulative(appPieces.map(\.text)), appPieces.map(\.at), $0) }
+        let eng = refs.indices.map { when(needFinal, cumulative(enginePieces.map(\.text)), enginePieces.map(\.at), $0) }
 
         var lines = ["**引擎**：\(engine)", ""]
         lines.append("- 一节 \(String(format: "%.0f", audioSeconds)) 秒的“课”，\(refs.count) 句话，句间停顿 0.15～0.6 秒")
         lines.append("- 错字率（按字，去掉空格标点）：**\(String(format: "%.1f%%", cer * 100))**")
         lines.append("- 老师说完一句 → 屏幕上“正在说”出现这句的最后一个字：中位数 **\(fmt(median(live.compactMap { $0 })))** 秒，最慢 \(fmt(live.compactMap { $0 }.max())) 秒")
-        lines.append("- 老师说完一句 → 这句定下来、送去翻译（App 的做法）：中位数 **\(fmt(median(app.compactMap { $0 })))** 秒，最慢 \(fmt(app.compactMap { $0 }.max())) 秒")
+        lines.append("- 老师说完一句 → 这句定下来、送去翻译（App 的做法：句尾稳定 1 秒或停顿 1.3 秒就定）：中位数 **\(fmt(median(app.compactMap { $0 })))** 秒，最慢 \(fmt(app.compactMap { $0 }.max())) 秒")
         lines.append("- 对比：只等引擎自己定稿：中位数 \(fmt(median(eng.compactMap { $0 }))) 秒，最慢 \(fmt(eng.compactMap { $0 }.max())) 秒（引擎一共定稿 \(finals.count) 次）")
         lines.append("")
         lines.append("| # | 说完（秒） | 正在说 | App 定句 | 只等引擎 | 原句 |")
@@ -256,6 +270,32 @@ struct Bench {
 
     static func normalize(_ s: String) -> [Character] {
         Array(s.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.map(Character.init))
+    }
+
+    /// 讲稿里每个字对应识别结果里的第几个字（漏掉的字对应到前一个字）
+    static func align(_ r: [Character], _ h: [Character]) -> [Int] {
+        let n = r.count, m = h.count
+        guard n > 0, m > 0 else { return [] }
+        var d = [[Int]](repeating: [Int](repeating: 0, count: m + 1), count: n + 1)
+        for i in 0...n { d[i][0] = i }
+        for j in 0...m { d[0][j] = j }
+        for i in 1...n {
+            for j in 1...m {
+                d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (r[i - 1] == h[j - 1] ? 0 : 1))
+            }
+        }
+        var map = [Int](repeating: 0, count: n)
+        var i = n, j = m
+        while i > 0 {
+            if j > 0 && d[i][j] == d[i - 1][j - 1] + (r[i - 1] == h[j - 1] ? 0 : 1) {
+                map[i - 1] = j - 1; i -= 1; j -= 1
+            } else if j == 0 || d[i][j] == d[i - 1][j] + 1 {
+                map[i - 1] = max(0, j - 1); i -= 1
+            } else {
+                j -= 1
+            }
+        }
+        return map
     }
 
     static func errorRate(reference: String, hypothesis: String) -> Double {

@@ -43,6 +43,7 @@ final class LiveController: ObservableObject {
     private let levelBox = SharedBox<Float>(0)
     private var offset: Double = 0
     private var soft = SoftCommitter()
+    private var volatileRange: (Double?, Double?) = (nil, nil)
     private var terms: [Term] = []
     private var liveTranslate = true
     private var volatileGen = 0
@@ -190,6 +191,7 @@ final class LiveController: ObservableObject {
         let rangeEnd = u.end.map { $0 + offset }
 
         if !u.isFinal {
+            volatileRange = (rangeStart, rangeEnd)
             // 老师一直讲不停、引擎迟迟不定稿时：讲到句尾、而且 1 秒没变的那部分先定下来去翻译
             let (piece, rest) = soft.volatile(text, at: Date().timeIntervalSinceReferenceDate)
             if let piece {
@@ -298,6 +300,19 @@ final class LiveController: ObservableObject {
         now.gainDb = capture.gainDb
         if !now.source.isEmpty, now.source != lastVolatileSent, Date().timeIntervalSince(lastVolatileAt) >= 0.45 {
             sendVolatile(force: true)
+        }
+        // 老师停下来了、引擎还没定稿：把正在显示的这段先定下来
+        if phase == .running, let piece = soft.idle(at: Date().timeIntervalSinceReferenceDate) {
+            let all = TextTools.letterCount(soft.committed)
+            let before = all - TextTools.letterCount(piece)
+            let heard = capture.elapsed
+            let (s, e) = Self.span(volatileRange.0, volatileRange.1, from: before, to: all, of: all, heard: heard)
+            volatileGen += 1
+            now.source = ""
+            now.target = ""
+            lastVolatileSent = ""
+            translator.dropVolatile()
+            if !TextTools.isFiller(piece) { addLines(piece, start: s, end: e, heard: heard) }
         }
         // 每 10 秒自动存一次，App 万一被关掉也不丢字幕
         if dirty, Date().timeIntervalSince(lastSave) > 10, var s = current {

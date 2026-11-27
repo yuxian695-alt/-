@@ -218,13 +218,21 @@ public enum TextTools {
 public struct SoftCommitter {
     public private(set) var committed = ""
     private var history: [(at: Double, text: String)] = []
+    private var lastRest = ""
+    private var lastChange: Double = 0
     public var stableFor: Double
+    public var pauseFor: Double
 
-    public init(stableFor: Double = 1.0) { self.stableFor = stableFor }
+    public init(stableFor: Double = 1.0, pauseFor: Double = 1.3) {
+        self.stableFor = stableFor
+        self.pauseFor = pauseFor
+    }
 
     /// 收到一版临时结果（t 是秒）。返回这次要先定下来的一句（可能没有）和剩下还在说的部分。
     public mutating func volatile(_ text: String, at t: Double) -> (commit: String?, rest: String) {
         var rest = TextTools.dropAligned(text, prefix: committed)
+        if rest != lastRest { lastChange = t }
+        lastRest = rest
         history.append((t, rest))
         history.removeAll { t - $0.at > 5 }
         guard let old = history.last(where: { t - $0.at >= stableFor }) else { return (nil, rest) }
@@ -236,8 +244,19 @@ public struct SoftCommitter {
         guard TextTools.letterCount(piece) > 0 else { return (nil, rest) }
         committed = committed.isEmpty ? piece : committed + " " + piece
         rest = TextTools.dropAligned(rest, prefix: piece)
+        lastRest = rest
         history = history.map { (at: $0.at, text: TextTools.dropAligned($0.text, prefix: piece)) }
         return (piece, rest)
+    }
+
+    /// 定时调用：老师停下来超过 pauseFor 秒，引擎却还没定稿，就把还在显示的那段整个定下来。
+    public mutating func idle(at t: Double) -> String? {
+        guard TextTools.letterCount(lastRest) >= 2, t - lastChange >= pauseFor else { return nil }
+        let piece = lastRest
+        committed = committed.isEmpty ? piece : committed + " " + piece
+        lastRest = ""
+        history = []
+        return piece
     }
 
     /// 收到定稿：去掉已经先切走的部分，返回剩下的，然后从头开始。
@@ -245,6 +264,7 @@ public struct SoftCommitter {
         let rest = TextTools.dropAligned(text, prefix: committed)
         committed = ""
         history = []
+        lastRest = ""
         return rest
     }
 }

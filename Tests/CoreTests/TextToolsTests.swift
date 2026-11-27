@@ -110,4 +110,17 @@ final class SoftCommitTests: XCTestCase {
         let r = s.volatile("가격이 오르면 수요량은 줄어듭니다 그리고", at: 1.2)
         XCTAssertNil(r.commit)
     }
+
+    func testCommitsWhenTeacherPausesButEngineHasNotFinalized() {
+        var s = SoftCommitter(stableFor: 1.0, pauseFor: 1.3)
+        _ = s.volatile("오늘은 수요와 공급을", at: 0)
+        _ = s.volatile("오늘은 수요와 공급을 배웁니다", at: 0.4)
+        _ = s.volatile("오늘은 수요와 공급을 배웁니다", at: 0.8)   // 引擎重复发同一版不算“还在说”
+        XCTAssertNil(s.idle(at: 1.2))
+        XCTAssertEqual(s.idle(at: 1.8), "오늘은 수요와 공급을 배웁니다")
+        XCTAssertNil(s.idle(at: 3.0))
+        // 引擎后来又发了一版同样的、再定稿：都不重复
+        XCTAssertEqual(s.volatile("오늘은 수요와 공급을 배웁니다", at: 3.1).rest, "")
+        XCTAssertEqual(s.final("오늘은 수요와 공급을 배웁니다."), "")
+    }
 }
