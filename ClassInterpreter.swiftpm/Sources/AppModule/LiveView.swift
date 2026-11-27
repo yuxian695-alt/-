@@ -219,12 +219,14 @@ private struct NowPanel: View {
                 .font(.system(size: fontSize * 1.1, weight: .bold))
                 .foregroundStyle(Theme.accentSoft)
                 .lineLimit(3)
+                .truncationMode(.head)
                 .frame(maxWidth: .infinity, alignment: .leading)
             if showSource {
                 Text(now.source.isEmpty ? " " : now.source)
                     .font(.system(size: max(14, fontSize * 0.66)))
                     .foregroundStyle(Theme.muted)
                     .lineLimit(2)
+                    .truncationMode(.head)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

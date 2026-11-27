@@ -56,12 +56,12 @@ jobs:
           sudo xcode-select -s "$xc"
           sw_vers
       - name: 生成韩语讲课音频
-        run: Bench/make-audio.sh /tmp/lecture.wav
+        run: Bench/make-audio.sh /tmp/lec
       - name: 跑实测
         working-directory: Bench
         run: |
           swift build -c release 2>&1 | grep -E "error|warning: unre|Compiling|Build" | tail -20
-          perl -e 'alarm shift; exec @ARGV' 900 .build/release/bench /tmp/lecture.wav lecture_ko.txt ko-KR
+          perl -e 'alarm shift; exec @ARGV' 900 .build/release/bench /tmp/lec lecture_ko.txt ko-KR
           cat bench-report.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()

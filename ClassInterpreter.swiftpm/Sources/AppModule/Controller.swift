@@ -42,6 +42,7 @@ final class LiveController: ObservableObject {
     private let recognizer = SharedBox<LiveRecognizer?>(nil)
     private let levelBox = SharedBox<Float>(0)
     private var offset: Double = 0
+    private var soft = SoftCommitter()
     private var terms: [Term] = []
     private var liveTranslate = true
     private var volatileGen = 0
@@ -79,6 +80,7 @@ final class LiveController: ObservableObject {
             translator.configure(source: pair.source, target: pair.target)
 
             offset = 0
+            soft = SoftCommitter()
             let rec = try await makeRecognizer(pair, speechAuthorized: speechOK)
             let record = Prefs.bool(Prefs.record, default: true)
             var s = ClassSession(title: Self.title(course), course: course, started: Date(),
@@ -167,6 +169,7 @@ final class LiveController: ObservableObject {
             guard self.isLive,
                   let r = LegacyRecognizer(locale: Locale(identifier: s.sourceLang), contextual: self.terms.map(\.source)) else { return }
             self.offset = self.capture?.elapsed ?? 0
+            self.soft = SoftCommitter()
             self.attach(r)
             do {
                 try await r.start()
@@ -182,23 +185,54 @@ final class LiveController: ObservableObject {
     private func handle(_ u: RecognitionUpdate) {
         guard current != nil, phase != .idle else { return }
         let text = TextTools.clean(u.text)
+        let heard = capture?.elapsed ?? now.elapsed
+        let rangeStart = u.start.map { $0 + offset }
+        let rangeEnd = u.end.map { $0 + offset }
+
         if !u.isFinal {
-            now.source = text
-            if text.isEmpty { now.target = "" }
-            sendVolatile(force: false)
+            // 老师一直讲不停、引擎迟迟不定稿时：讲到句尾、而且 1 秒没变的那部分先定下来去翻译
+            let (piece, rest) = soft.volatile(text, at: Date().timeIntervalSinceReferenceDate)
+            if let piece {
+                let all = TextTools.letterCount(soft.committed) + TextTools.letterCount(rest)
+                let before = TextTools.letterCount(soft.committed) - TextTools.letterCount(piece)
+                let (s, e) = Self.span(rangeStart, rangeEnd, from: before, to: before + TextTools.letterCount(piece),
+                                       of: all, heard: heard)
+                if !TextTools.isFiller(piece) { addLines(piece, start: s, end: e, heard: heard) }
+                volatileGen += 1
+                lastVolatileSent = ""
+                now.target = ""
+                translator.dropVolatile()
+            }
+            now.source = rest
+            if rest.isEmpty { now.target = "" }
+            sendVolatile(force: piece != nil)
             return
         }
+
+        let all = TextTools.letterCount(text)
+        let remainder = soft.final(text)
         volatileGen += 1
         now.source = ""
         now.target = ""
         lastVolatileSent = ""
         translator.dropVolatile()
-        guard !TextTools.isFiller(text) else { return }
+        guard !TextTools.isFiller(remainder) else { return }
+        let (s, e) = Self.span(rangeStart, rangeEnd, from: all - TextTools.letterCount(remainder), to: all, of: all, heard: heard)
+        addLines(remainder, start: s, end: e, heard: heard)
+    }
 
-        let heard = capture?.elapsed ?? now.elapsed
-        let end = u.end.map { $0 + offset } ?? heard
-        let start = u.start.map { $0 + offset } ?? max(0, end - Double(TextTools.letterCount(text)) * 0.12)
-        let audioDelay = max(0, heard - end)
+    /// 按字数比例估计一段话在录音里的起止时间
+    static func span(_ start: Double?, _ end: Double?, from a: Int, to b: Int, of total: Int, heard: Double) -> (Double, Double) {
+        guard let start, let end, end >= start, total > 0 else {
+            let e = heard
+            return (max(0, e - Double(b - a) * 0.12), e)
+        }
+        let d = end - start
+        return (start + d * Double(a) / Double(total), start + d * Double(b) / Double(total))
+    }
+
+    /// 切成句子、加进字幕、去翻译。延迟 = 这句说完 → 中文出现。
+    private func addLines(_ text: String, start: Double, end: Double, heard: Double) {
         let arrived = Date()
         let pieces = TextTools.splitSentences(text)
         let total = max(1, pieces.reduce(0) { $0 + TextTools.letterCount($1) })
@@ -208,8 +242,7 @@ final class LiveController: ObservableObject {
             let line = Line(start: t, end: t + share, source: p)
             t += share
             current?.lines.append(line)
-            // 延迟 = 这句说完 → 中文出现
-            translate(line, extraLag: (end - line.end) + audioDelay, arrived: arrived)
+            translate(line, extraLag: heard - line.end, arrived: arrived)
         }
         dirty = true
     }
