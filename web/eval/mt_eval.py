@@ -99,6 +99,7 @@ CANDIDATES = {
     "Qwen3-1.7B+例句": lambda: run_llm("Qwen/Qwen3-1.7B", True, shots=True),
     "Qwen2.5-1.5B+例句": lambda: run_llm("Qwen/Qwen2.5-1.5B-Instruct", shots=True),
     "Qwen3-4B+例句": lambda: run_llm("Qwen/Qwen3-4B", True, torch.bfloat16, shots=True),
+    "Qwen3.5-4B+例句": lambda: run_llm("Qwen/Qwen3.5-4B", True, torch.bfloat16, shots=True),
 }
 
 only = [a for arg in sys.argv[1:] for a in arg.split(",") if a.strip()] or list(CANDIDATES)
