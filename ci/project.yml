@@ -12,7 +12,7 @@ targets:
       - path: ../ClassInterpreter.swiftpm/Sources/AppModule
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.xiaobawang.classinterpreter
+        PRODUCT_BUNDLE_IDENTIFIER: com.xiaobawang.ClassInterpreter
         PRODUCT_NAME: ClassInterpreter
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: 课堂同传

@@ -29,7 +29,7 @@ xcrun simctl bootstatus "$udid" -b
 xcrun simctl ui "$udid" appearance dark || true
 xcrun simctl status_bar "$udid" override --time "10:41" --batteryState charged --batteryLevel 100 --wifiBars 3 || true
 xcrun simctl install "$udid" "$app"
-bid=app.xiaobawang.classinterpreter
+bid=com.xiaobawang.ClassInterpreter
 
 # 先按平时的方式（不带示例数据）打开，确认首页检查跑完以后 App 还活着
 xcrun simctl launch "$udid" "$bid"

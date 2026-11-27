@@ -16,7 +16,7 @@ let package = Package(
         .iOSApplication(
             name: "课堂同传",
             targets: ["AppModule"],
-            bundleIdentifier: "app.xiaobawang.classinterpreter",
+            bundleIdentifier: "com.xiaobawang.ClassInterpreter",
             displayVersion: "1.0",
             bundleVersion: "1",
             appIcon: .placeholder(icon: .mic),
@@ -32,10 +32,10 @@ let package = Package(
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
             capabilities: [
-                .microphone(purposeString: "上课时听老师讲话，在 iPad 本机实时识别并翻译。声音不会上传。")
+                .microphone(purposeString: "上课时听老师讲话，在 iPad 本机实时识别并翻译。声音不会上传。"),
+                .speechRecognition(purposeString: "在 iPad 本机把老师说的话变成文字。识别在本机完成，不会上传。")
             ],
-            appCategory: .education,
-            additionalInfoPlistContentFilePath: "AppInfo.plist"
+            appCategory: .education
         )
     ],
     targets: [

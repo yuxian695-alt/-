@@ -41,11 +41,17 @@ jobs:
           if [ -n "$f" ]; then grep -n -E "static func|static var|case |additionalInfoPlist" "$f" | head -200
           else strings "$d/libAppleProductTypes.dylib" | grep -i -E "speech|microphone|purpose|background" | sort -u | head -60; fi
 
+      - name: 检查 Swift Playgrounds 工程清单（Package.swift 能被解析）
+        working-directory: ClassInterpreter.swiftpm
+        run: |
+          xcodebuild -list > /tmp/list.txt 2>&1 || true
+          cat /tmp/list.txt | tail -20
+          if grep -q "error:" /tmp/list.txt || ! grep -q "Schemes:" /tmp/list.txt; then echo "Package.swift 有错"; exit 1; fi
+
       - name: 原样编译 Swift Playgrounds 工程
         continue-on-error: true
         working-directory: ClassInterpreter.swiftpm
         run: |
-          xcodebuild -list 2>&1 | tail -20
           scheme=$(xcodebuild -list -json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); s=(d.get("workspace") or d.get("project") or {}).get("schemes",[]); print(s[0] if s else "")')
           echo "scheme=$scheme"
           [ -n "$scheme" ] || exit 1
