@@ -104,3 +104,21 @@ jobs:
           name: screenshots
           path: shots/*.png
           if-no-files-found: ignore
+
+  ipa:
+    name: 编出 ipa 安装包（给爱思助手签名安装）
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: 选最新的 Xcode
+        run: |
+          xc=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          sudo xcode-select -s "$xc"
+      - name: 编译并打包
+        run: ci/build-ipa.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipa
+          path: ipa/ClassInterpreter.ipa
+

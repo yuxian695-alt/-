@@ -7,3 +7,5 @@ Bench/bench-report.md
 ci/dd/
 ci/*.xcodeproj/
 shots/
+ci/dd-ipa/
+ipa/

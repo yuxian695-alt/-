@@ -1,4 +1,4 @@
-# 只给截图用：把 iPad App 的源码包成一个普通 Xcode 工程，装进 iPad 模拟器。
+# 把 iPad App 的源码包成一个普通 Xcode 工程：截模拟器图用，也用来编出 ipa（用爱思助手等工具签名后装到 iPad）。
 name: ClassInterpreterDemo
 options:
   bundleIdPrefix: app.xiaobawang
@@ -10,11 +10,16 @@ targets:
     platform: iOS
     sources:
       - path: ../ClassInterpreter.swiftpm/Sources/AppModule
+      - path: Assets.xcassets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xiaobawang.ClassInterpreter
         PRODUCT_NAME: ClassInterpreter
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Info-extra.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_CFBundleDisplayName: 课堂同传
         INFOPLIST_KEY_NSMicrophoneUsageDescription: 上课时听老师讲话，在 iPad 本机实时识别并翻译。
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 在 iPad 本机把老师说的话变成文字。
