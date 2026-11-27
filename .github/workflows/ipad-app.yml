@@ -1,0 +1,71 @@
+name: iPad App 检查
+
+on:
+  push:
+    branches: [ipad-interpreter]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: 编译和测试
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选最新的 Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          xc=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          sudo xcode-select -s "$xc"
+          xcodebuild -version
+          swift --version
+          xcodebuild -showsdks | grep -i ios || true
+
+      - name: 纯逻辑测试（切句、术语表、自动增益）
+        run: swift test 2>&1 | tail -60
+
+      - name: 整个 App 按 iPadOS 编译
+        run: ci/typecheck-app.sh
+
+      - name: 原样编译 Swift Playgrounds 工程
+        continue-on-error: true
+        working-directory: ClassInterpreter.swiftpm
+        run: |
+          xcodebuild -list 2>&1 | tail -20
+          scheme=$(xcodebuild -list -json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); s=(d.get("workspace") or d.get("project") or {}).get("schemes",[]); print(s[0] if s else "")')
+          echo "scheme=$scheme"
+          [ -n "$scheme" ] || exit 1
+          xcodebuild build -scheme "$scheme" -destination 'generic/platform=iOS' -derivedDataPath /tmp/pg CODE_SIGNING_ALLOWED=NO 2>&1 \
+            | grep -E "error:|BUILD (SUCCEEDED|FAILED)" | sort -u
+
+  bench:
+    name: 识别实测（韩语合成讲课）
+    runs-on: macos-26
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: 选最新的 Xcode
+        run: |
+          xc=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          sudo xcode-select -s "$xc"
+          sw_vers
+      - name: 生成韩语讲课音频
+        run: Bench/make-audio.sh /tmp/lecture.wav
+      - name: 跑实测
+        working-directory: Bench
+        run: |
+          swift build -c release 2>&1 | grep -E "error|warning: unre|Compiling|Build" | tail -20
+          perl -e 'alarm shift; exec @ARGV' 900 .build/release/bench /tmp/lecture.wav lecture_ko.txt ko-KR
+          cat bench-report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-report
+          path: Bench/bench-report.md
+          if-no-files-found: ignore
