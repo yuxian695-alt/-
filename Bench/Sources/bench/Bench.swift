@@ -35,39 +35,60 @@ struct Bench {
     static func run(_ url: URL, locale: Locale, fast: Bool, reference: String) async throws -> [String] {
         let all = await SpeechTranscriber.supportedLocales
         let want = locale.identifier(.bcp47)
-        guard let resolved = all.first(where: { $0.identifier(.bcp47) == want })
-                ?? all.first(where: { $0.language.languageCode == locale.language.languageCode }) else {
-            return ["- 这台 Mac 的 SpeechTranscriber 不支持 \(want)（支持 \(all.count) 种）"]
-        }
-        let transcriber = SpeechTranscriber(locale: resolved, transcriptionOptions: [],
-                                            reportingOptions: fast ? [.volatileResults, .fastResults] : [.volatileResults],
-                                            attributeOptions: [.audioTimeRange])
         let clock = ContinuousClock()
-        var t = clock.now
-        if let req = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+        let t0Holder = SharedInstant()
+        let module: any SpeechModule
+        let collector: Task<[Event], Error>
+        var engine = "SpeechTranscriber（App 默认用的新版）"
+        if let resolved = all.first(where: { $0.identifier(.bcp47) == want })
+            ?? all.first(where: { $0.language.languageCode == locale.language.languageCode }) {
+            let transcriber = SpeechTranscriber(locale: resolved, transcriptionOptions: [],
+                                                reportingOptions: fast ? [.volatileResults, .fastResults] : [.volatileResults],
+                                                attributeOptions: [.audioTimeRange])
+            module = transcriber
+            collector = Task {
+                var out: [Event] = []
+                for try await r in transcriber.results {
+                    out.append(Event(text: String(r.text.characters), isFinal: r.isFinal,
+                                     start: r.range.start.seconds, end: r.range.end.seconds, arrival: t0Holder.since(clock)))
+                }
+                return out
+            }
+        } else {
+            let dict = await DictationTranscriber.supportedLocales
+            print("SpeechTranscriber 支持 \(all.count) 种语言；DictationTranscriber 支持 \(dict.count) 种")
+            guard !fast, let resolved = dict.first(where: { $0.identifier(.bcp47) == want })
+                    ?? dict.first(where: { $0.language.languageCode == locale.language.languageCode }) else {
+                return fast ? [] : ["- 这台 Mac（GitHub 虚拟机）上 SpeechTranscriber 支持 \(all.count) 种语言、DictationTranscriber 支持 \(dict.count) 种，测不了 \(want)。"]
+            }
+            engine = "DictationTranscriber（这台虚拟机不支持新版，只能测旧一代引擎）"
+            let transcriber = DictationTranscriber(locale: resolved, contentHints: [.farField], transcriptionOptions: [],
+                                                   reportingOptions: [.volatileResults], attributeOptions: [.audioTimeRange])
+            module = transcriber
+            collector = Task {
+                var out: [Event] = []
+                for try await r in transcriber.results {
+                    out.append(Event(text: String(r.text.characters), isFinal: r.isFinal,
+                                     start: r.range.start.seconds, end: r.range.end.seconds, arrival: t0Holder.since(clock)))
+                }
+                return out
+            }
+        }
+        let t = clock.now
+        if let req = try await AssetInventory.assetInstallationRequest(supporting: [module]) {
             print("正在下载识别包…")
             try await req.downloadAndInstall()
             print("识别包下载用时 \(clock.now - t)")
         }
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
-        let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber])
+        let analyzer = SpeechAnalyzer(modules: [module])
+        let target = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [module])
         let (stream, input) = AsyncStream<AnalyzerInput>.makeStream()
 
         let file = try AVAudioFile(forReading: url)
         let fmt = file.processingFormat
         let converter = target.flatMap { AVAudioConverter(from: fmt, to: $0) }
-        t = clock.now
-        let t0 = t
-        let collector = Task { () throws -> [Event] in
-            var out: [Event] = []
-            for try await r in transcriber.results {
-                let d = clock.now - t0
-                let arrival = Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
-                out.append(Event(text: String(r.text.characters), isFinal: r.isFinal,
-                                 start: r.range.start.seconds, end: r.range.end.seconds, arrival: arrival))
-            }
-            return out
-        }
+        t0Holder.reset(clock)
+        let t0 = t0Holder.value
         try await analyzer.start(inputSequence: stream)
 
         var fed: AVAudioFramePosition = 0
@@ -93,7 +114,7 @@ struct Bench {
         let volLag = volatile.map { $0.arrival - $0.end }
         let hyp = finals.map(\.text).joined(separator: " ")
         let cer = errorRate(reference: reference, hypothesis: hyp)
-        var lines = ["### 设置：\(fast ? "volatileResults + fastResults（App 用的）" : "只有 volatileResults")", ""]
+        var lines = ["### \(engine)：\(fast ? "volatileResults + fastResults（App 用的设置）" : "只有 volatileResults")", ""]
         lines.append("- 音频 \(String(format: "%.1f", audioSeconds)) 秒，定稿 \(finals.count) 段，临时结果 \(volatile.count) 次")
         lines.append("- 错字率（按字，去掉空格标点）：**\(String(format: "%.1f%%", cer * 100))**")
         lines.append("- 一段话说完 → 定稿文字出来：中位数 **\(fmt2(median(finalLag)))** 秒，最慢 \(fmt2(finalLag.max())) 秒")
@@ -170,6 +191,18 @@ struct Bench {
     }
 
     static func median(_ v: [Double]) -> Double? { percentile(v, 0.5) }
+
+    /// 开始计时的时刻（识别结果在另一个任务里读它）
+    final class SharedInstant: @unchecked Sendable {
+        private let lock = NSLock()
+        private var start = ContinuousClock().now
+        var value: ContinuousClock.Instant { lock.withLock { start } }
+        func reset(_ clock: ContinuousClock) { lock.withLock { start = clock.now } }
+        func since(_ clock: ContinuousClock) -> Double {
+            let d = clock.now - value
+            return Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
+        }
+    }
     static func percentile(_ v: [Double], _ p: Double) -> Double? {
         guard !v.isEmpty else { return nil }
         let s = v.sorted()

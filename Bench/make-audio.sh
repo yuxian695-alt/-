@@ -2,7 +2,10 @@
 # 用 macOS 自带的韩语声音（Yuna）把讲稿读出来：句子之间停 0.6 秒；倒数第二句很长、中间不停，用来测“老师一直讲不停”的情况。
 set -euo pipefail
 out="$1"
-voice=$(say -v '?' | awk '/ko_KR/ {print $1; exit}')
+say -v '?' | grep ko_KR || true
+# 优先用韩语专用的 Yuna；没有就用多语言声音的韩语版本，例如 “Eddy (Korean (South Korea))”
+voice=$(say -v '?' | grep -E '^Yuna[[:space:]]' | head -1 | sed -E 's/[[:space:]]+ko_KR.*//')
+[ -n "$voice" ] || voice=$(say -v '?' | grep ko_KR | head -1 | sed -E 's/[[:space:]]+ko_KR.*//')
 if [ -z "$voice" ]; then echo "没有韩语声音"; say -v '?' | head -40; exit 3; fi
 echo "用声音：$voice"
 tmp=$(mktemp)

@@ -47,7 +47,7 @@ enum SpeechPermission {
 
 #if compiler(>=6.2)
 @available(iOS 26.0, *)
-final class AnalyzerRecognizer: LiveRecognizer {
+final class AnalyzerRecognizer: LiveRecognizer, @unchecked Sendable {
     let name = "苹果离线识别"
     var onUpdate: ((RecognitionUpdate) -> Void)?
     var onError: ((Error) -> Void)?
@@ -126,12 +126,12 @@ final class AnalyzerRecognizer: LiveRecognizer {
         }
         let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [module])
         let (stream, continuation) = AsyncStream<AnalyzerInput>.makeStream()
-        lock.lock()
-        self.transcriber = module
-        self.analyzer = analyzer
-        self.format = format
-        self.input = continuation
-        lock.unlock()
+        lock.withLock {
+            self.transcriber = module
+            self.analyzer = analyzer
+            self.format = format
+            self.input = continuation
+        }
 
         resultsTask = Task { [weak self] in
             do {
@@ -140,28 +140,50 @@ final class AnalyzerRecognizer: LiveRecognizer {
                     let s = result.range.start.seconds, e = result.range.end.seconds
                     let update = RecognitionUpdate(text: text, isFinal: result.isFinal,
                                                    start: s.isFinite ? s : nil, end: e.isFinite ? e : nil)
-                    await MainActor.run { self?.onUpdate?(update) }
+                    await self?.deliver(update)
                 }
+            } catch is CancellationError {
+                // 下课时等得太久被取消：不算出错
             } catch {
-                await MainActor.run { self?.onError?(error) }
+                await self?.deliver(error)
             }
         }
         try await analyzer.start(inputSequence: stream)
     }
 
+    @MainActor private func deliver(_ update: RecognitionUpdate) { onUpdate?(update) }
+    @MainActor private func deliver(_ error: Error) { onError?(error) }
+
     func append(_ buffer: AVAudioPCMBuffer) {
-        lock.lock(); let format = self.format; let input = self.input; lock.unlock()
+        let (format, input) = lock.withLock { (self.format, self.input) }
         guard let input else { return }
         do {
-            let converted = try format.map { try converter.convert(buffer, to: $0) } ?? buffer
+            var converted = try format.map { try converter.convert(buffer, to: $0) } ?? buffer
+            // 格式刚好一样时拿到的是麦克风的原始缓冲区，系统会重复使用它：复制一份再交出去
+            if converted === buffer, let copy = Self.copy(buffer) { converted = copy }
             input.yield(AnalyzerInput(buffer: converted))
         } catch {
             // 一块声音转换失败只丢这一块
         }
     }
 
+    private static func copy(_ b: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        guard let out = AVAudioPCMBuffer(pcmFormat: b.format, frameCapacity: b.frameLength) else { return nil }
+        out.frameLength = b.frameLength
+        let src = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: b.audioBufferList))
+        let dst = UnsafeMutableAudioBufferListPointer(out.mutableAudioBufferList)
+        for (s, d) in zip(src, dst) {
+            guard let sp = s.mData, let dp = d.mData else { return nil }
+            memcpy(dp, sp, Int(min(s.mDataByteSize, d.mDataByteSize)))
+        }
+        return out
+    }
+
     func finish() async {
-        lock.lock(); let input = self.input; let analyzer = self.analyzer; self.input = nil; lock.unlock()
+        let (input, analyzer) = lock.withLock { () -> (AsyncStream<AnalyzerInput>.Continuation?, SpeechAnalyzer?) in
+            defer { self.input = nil }
+            return (self.input, self.analyzer)
+        }
         input?.finish()
         try? await analyzer?.finalizeAndFinishThroughEndOfInput()
         // 等最后几句定稿送达
@@ -178,7 +200,7 @@ final class AnalyzerRecognizer: LiveRecognizer {
 
 // MARK: - 旧版：SFSpeechRecognizer（iPadOS 18～25 或新版不支持该语言时使用）
 
-final class LegacyRecognizer: LiveRecognizer {
+final class LegacyRecognizer: LiveRecognizer, @unchecked Sendable {
     let name: String
     var onUpdate: ((RecognitionUpdate) -> Void)?
     var onError: ((Error) -> Void)?

@@ -102,9 +102,11 @@ final class LiveController: ObservableObject {
             startTicker()
         } catch {
             await teardown()
-            startError = error.localizedDescription
             phase = .idle
             presented = false
+            // 等全屏界面收起来再弹提示，不然提示框可能弹不出来
+            try? await Task.sleep(nanoseconds: 700_000_000)
+            startError = error.localizedDescription
         }
     }
 
