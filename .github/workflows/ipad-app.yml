@@ -35,9 +35,11 @@ jobs:
       - name: Swift Playgrounds 工程支持哪些权限写法
         continue-on-error: true
         run: |
-          find "$(xcode-select -p)/.." -iname "*AppleProductTypes*" 2>/dev/null | head -20
-          f=$(find "$(xcode-select -p)/.." -iname "AppleProductTypes*.swiftinterface" 2>/dev/null | head -1)
-          [ -n "$f" ] && grep -n -E "static func|static var|case |additionalInfoPlist" "$f" | head -150 || true
+          d="$(xcode-select -p)/../SharedFrameworks/SwiftPM.framework/Versions/A/SharedSupport/ManifestAPI"
+          ls -la "$d/AppleProductTypes.swiftmodule" || true
+          f=$(find "$d/AppleProductTypes.swiftmodule" -name "*.swiftinterface" | head -1)
+          if [ -n "$f" ]; then grep -n -E "static func|static var|case |additionalInfoPlist" "$f" | head -200
+          else strings "$d/libAppleProductTypes.dylib" | grep -i -E "speech|microphone|purpose|background" | sort -u | head -60; fi
 
       - name: 原样编译 Swift Playgrounds 工程
         continue-on-error: true
